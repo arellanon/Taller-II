@@ -1,0 +1,9 @@
+Modo de Uso en consola:
+Primero ejecutar dos servidores HTTP ejer5.py en los puertos 8001 y 8002
+
+python ejer5.py 127.0.0.1 8001
+python ejer5.py 127.0.0.1 8002
+
+Después ejecutar el balanceador de carga:
+
+python ejer7.py

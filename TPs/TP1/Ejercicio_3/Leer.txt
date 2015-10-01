@@ -1,0 +1,2 @@
+Modo de Uso en consola:
+python ejer3.py parametro_de_consulta

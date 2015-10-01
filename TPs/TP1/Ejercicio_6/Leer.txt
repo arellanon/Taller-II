@@ -1,0 +1,8 @@
+Modo de Uso en consola:
+Primero ejecutar el servidor HTTP ejer5.py con HOST_NAME y PORT_NUMBER por defecto ( sin parametros)
+
+python ejer5.py
+
+Después ejecutar el sincronizador de carpetas:
+
+python ejer6.py

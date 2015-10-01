@@ -1,0 +1,5 @@
+Modo de Uso en consola:
+python ejer4.py url_rss
+
+ej.:
+python ejer4.py http://www.telam.com.ar/rss2/politica.xml

@@ -1,0 +1,5 @@
+Modo de Uso en consola:
+python ejer5.py [HOST_NAME] [PORT_NUMBER] 
+
+El HOST_NAME y PORT_NUMBER, por defecto se ejecuta en 127.0.0.1:8000.
+El directorio raiz del servidor es ./www/

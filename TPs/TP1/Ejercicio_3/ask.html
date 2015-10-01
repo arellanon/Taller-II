@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Goku - Ask.com Búsqueda web</title>
+    <link REL="shortcut icon" HREF="http://sp.ar.ask.com/sh/i/a14/favicon/favicon.ico">
+    
+
+<script type="text/javascript" charset="utf-8">
+    (function(G,o,O,g,L,e){G[g]=G[g]||function(){(G[g]['q']=G[g]['q']||[]).push( arguments)},G[g]['t']=1*new Date;L=o.createElement(O),e=o.getElementsByTagName( O)[0];L.async=1;L.src='//www.google.com/adsense/search/async-ads.js'; e.parentNode.insertBefore(L,e)})(window,document,'script','_googCsa');
+</script>
+
+<script type="text/javascript" charset="utf-8">
+var ask = ask || {};
+ask.CSA = {};
+
+(function(){
+    var _logInConsole = false,
+        _csaStartTime = new Date(),         _csaResponseTime = null,
+        _atfReady = false,
+        _domReady = false,
+        _syncAds = false,
+        _showSerpTimeoutCleared = false,
+        _showSerpTimeoutLength = 2000,
+        _showSerpTimer = null,
+        _log = function(){
+            if(('false' === 'true') && window.console && console.log) {
+                console.log(Array.prototype.slice.call(arguments));
+            }
+        },
+                _domCallbacks = [],
+                        _csaCallbacksObjects = [];
+
+        ask.CSA.startTime = _csaStartTime;
+    ask.CSA.responseReceived = false;
+    ask.CSA.adsShown = false;
+    ask.CSA.responseTime = null;     ask.CSA.adsShownTime = null;     ask.CSA.domReadyTime = null;     ask.CSA.serpShownTime = null;     ask.CSA.serpVisible = false;
+    ask.CSA.showSerpTimeoutFired = false;
+    ask.CSA.showSerpTimeoutLength = _showSerpTimeoutLength;
+    ask.CSA.showSerpStartTime = null;
+    ask.CSA.numTopAds = null;
+    ask.CSA.numBottomAds = null;
+    ask.CSA.numRightAds = null;
+    ask.CSA.adDepth = null;
+    ask.CSA.serpHiddenPreAds = null;
+    ask.CSA.serpShownPostAds = null;
+    ask.CSA.syncAdsRenderingWithResults = null;
+    ask.CSA.viewportHeight = null;
+    ask.CSA.viewportWidth = null;
+    ask.CSA.centerRailHeight = null;
+    ask.CSA.centerRailWidth = null;
+    ask.CSA.rightRailHeight = null;
+    ask.CSA.rightRailWidth = null;
+    ask.CSA.csaHeight = null;
+    ask.CSA.csaWidth = null;
+    ask.CSA.adContentRatio = null;
+    ask.CSA.optimizeAdRequest = null;
+
+    
+    
+    ask.CSA.addCSALoadCallback = function(adsCb, timeoutCb, timeoutValue){
+        _log("addCSALoadCallback", adsCb, timeoutCb, timeoutValue);
+        var callbackObj = null;
+
+        if(typeof adsCb !== "function") {
+            return;
+        }
+
+        callbackObj = { adsCb: adsCb, timeoutCb: timeoutCb, timeoutValue: timeoutValue, timeout: null };
+
+        if(ask.CSA.adsShown) {
+                        adsCb();
+        } else {
+
+            if(typeof timeoutCb === "function" && timeoutValue > 0) {
+
+                callbackObj.timeout = setTimeout(function(){
+                                        var idx = _csaCallbacksObjects.indexOf(callbackObj);
+                    if(idx > -1) {
+                        handleCallbackTimeout(callbackObj);
+                    }
+                }, timeoutValue);
+
+            }
+
+                        _csaCallbacksObjects.push(callbackObj);
+        }
+    };
+
+        ask.CSA.startShowSerpTimeout = function(){
+        _log("startShowSerpTimeout", _showSerpTimeoutLength);
+        _showSerpTimer = setTimeout(handleSerpTimeout, _showSerpTimeoutLength);
+        ask.CSA.showSerpStartTime = new Date() - _csaStartTime;
+    };
+
+        ask.CSA.domReady = function(){
+        _log("domReady");
+        _domReady = true;
+        ask.CSA.domReadyTime = new Date() - _csaStartTime;
+        invokeCallbacks(_domCallbacks);
+    };
+
+        ask.CSA.atfReady = function(){
+        _log("atfReady");
+        _atfReady = true;
+        ask.CSA.atfReadyTime = new Date() - _csaStartTime;
+        if (_syncAds) {
+            addCssText('#midblock,#rightblock,#mobile-footer,.mobile-web-results,.hcsa{display:block;}');
+        }
+    };
+
+        ask.CSA.syncAds = function(sync){
+        _log("syncAds");
+        ask.CSA.syncAdsRenderingWithResults = _syncAds = sync;
+        if (_syncAds) {
+            addCssText('#midblock,#rightblock,#mobile-footer,.mobile-web-results,.hcsa{display:none;}');
+        }
+    };
+
+    ask.CSA.showSerp = makeSerpVisible;
+
+    ask.CSA.handleTopAdsLoaded = function(containerName, adsLoaded){
+        _log("handleTopAdsLoaded " + adsLoaded);
+
+        addBackgroundColor(adsLoaded, containerName, ask.CSA.adblock1["colorBackground"]);
+
+        ask.CSA.adsShown = true;
+        ask.CSA.adsShownTime = new Date() - _csaStartTime;
+
+        makeSerpVisible();
+
+        fireCSACallbacks();
+    };
+
+    ask.CSA.handleNoTopAdsLoaded = noAdLoadedCallback;
+
+    ask.CSA.handleBottomAdsLoaded = function(containerName, adsLoaded){
+        _log("handleBottomAdsLoaded " + adsLoaded);
+
+        addBackgroundColor(adsLoaded, containerName, ask.CSA.adblock2["colorBackground"]);
+    };
+
+    ask.CSA.handleRightAdsLoaded = function(containerName, adsLoaded){
+        _log("handleRightAdsLoaded " + adsLoaded);
+
+        addBackgroundColor(adsLoaded, containerName, ask.CSA.adblock3["colorBackground"]);
+    };
+
+    ask.CSA.handleNoBottomAdsLoaded = noAdLoadedCallback;
+
+    ask.CSA.handleNoRightAdsLoaded = noAdLoadedCallback;
+
+    ask.CSA.handleCSAResponse = function(numAdsMap) {
+        _log("handleCSAResponse " + numAdsMap);
+        
+        ask.CSA.responseTime = new Date() - _csaStartTime;
+
+        if (numAdsMap["magic1"] != undefined) {
+            ask.CSA.numTopAds = numAdsMap["magic1"];
+            ask.CSA.adDepth = ask.CSA.numTopAds;
+        }
+
+        if (numAdsMap["magic2"] != undefined) {
+            ask.CSA.numBottomAds = numAdsMap["magic2"];
+        }
+
+        if (ask.CSA.adDepth < ask.CSA.numBottomAds) {
+            ask.CSA.adDepth = ask.CSA.numBottomAds;
+        }
+
+        if (numAdsMap["magic3"] != undefined) {
+            ask.CSA.numRightAds = numAdsMap["magic3"];
+        }
+
+        if(_domReady) {
+            processAdResponse();
+        } else {
+            _domCallbacks.push(processAdResponse);
+        }
+    };
+
+    function processAdResponse(){
+        _log("processAdResponse");
+
+        ask.CSA.responseReceived = true;
+
+                setCSAMetaDataCookie();
+
+            }
+
+    function isSerpVisible() {
+                var visible = false,
+            selectors = ["#midblock", "#rightblock", "#mobile-footer", ".mobile-web-results", ".hcsa"],
+            elems = null;
+
+        for(var i = 0; i < selectors.length; i++) {
+            if(visible) continue;
+
+            try{
+                elems = document.querySelectorAll(selectors[i]);
+            } catch(e) {
+                _log("Error fetching serp elements: " + e);
+            }
+
+            if(elems) {
+                for(var j = 0; j < elems.length; j++) {
+                    visible=(visible || isVisible(elems[j]));
+                }
+            }
+        }
+
+        return visible;
+    }
+
+    function isVisible(elem) {
+        var outOfFlow = (elem.offsetWidth !== 0 || elem.offsetHeight !== 0),
+            invisible = false;
+        try {
+            invisible = (window.getComputedStyle(elem).getPropertyValue("visibility") === "hidden");
+        } catch(e) {
+            _log("Error getting style of elem: " + e);
+        }
+
+        return outOfFlow || invisible;
+    }
+
+    function addCssText(css) {
+        var head = document.getElementsByTagName('head')[0];
+        var style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        head.appendChild(style);
+    }
+
+    function makeSerpVisible() {
+        if(ask.CSA.serpVisible) return;
+        _log("makeSerpVisible");
+        addCssText('#midblock,#rightblock,#mobile-footer,.mobile-web-results,.hcsa{visibility:visible;}');
+
+                if (!_showSerpTimeoutCleared) {
+            clearTimeout(_showSerpTimer);
+            _showSerpTimeoutCleared = true;
+        }
+
+        ask.CSA.serpVisible = true;
+        ask.CSA.serpShownTime = new Date() - _csaStartTime;
+    }
+
+        function setCSAMetaDataCookie(){
+        document.cookie = 'adDepth=' + ask.CSA.adDepth + ";path=/;domain=.ask.com";
+        document.cookie = 'ad_cnt=' + (ask.CSA.numTopAds + ask.CSA.numBottomAds) + ";path=/;domain=.ask.com";
+    }
+
+    function updateMonitoringHash(){
+        _log("updateMonitoringHash");
+        var topAds = ask.CSA.numTopAds || 0,
+            bottomAds = ask.CSA.numBottomAds || 0,
+                rightAds = ask.CSA.numRightAds || 0,
+            hash = "num_ads_top=" + topAds +
+                    "&num_ads_bottom=" + bottomAds +
+                        "&num_ads_right=" + rightAds +
+                    "&total_num_ads=" + (topAds + bottomAds) +
+                    "&content_hidden_pre_ads=" + (ask.CSA.serpHiddenPreAds ? 1 : 0) +
+                    "&content_shown_post_ads=" + (ask.CSA.serpShownPostAds ? 1 : 0) +
+                    "&ads_response_time_ms=" + ask.CSA.responseTime;
+        window.location.hash = hash;
+    }
+
+    function updateMonitoringElement(){
+        _log("updateMonitoringElement");
+        var topAds = ask.CSA.numTopAds || 0,
+                bottomAds = ask.CSA.numBottomAds || 0,
+                rightAds = ask.CSA.numRightAds || 0,
+                body = document.getElementsByTagName("body")[0],
+                elem = document.createElement("div");
+
+                elem.setAttribute("id", "csa-monitor-data");
+        elem.setAttribute("style", "visibility: hidden;");
+        elem.setAttribute("data-num_ads_top", topAds);
+        elem.setAttribute("data-num_ads_bottom", bottomAds);
+        elem.setAttribute("data-num_ads_right", rightAds);
+        elem.setAttribute("data-total_num_ads", topAds + bottomAds + rightAds);
+        elem.setAttribute("data-content_hidden_pre_ads", ask.CSA.serpHiddenPreAds ? 1 : 0);
+        elem.setAttribute("data-content_shown_post_ads", ask.CSA.serpShownPostAds ? 1 : 0);
+        elem.setAttribute("data-ads_response_time_ms", ask.CSA.responseTime);
+
+                body.appendChild(elem);
+    }
+
+    function noAdLoadedCallback(containerName, adsLoaded) {
+        _log("noAdLoadedCallback");
+
+        function process(){
+            var adContainer = document.getElementById(containerName);
+
+            if(adContainer)
+                adContainer.style.display = "none";
+
+            makeSerpVisible();
+        }
+
+        if(_domReady) {
+            process();
+        } else {
+            _domCallbacks.push(process);
+        }
+
+    }
+
+    function addBackgroundColor(adsLoaded, containerName, shadeSelector) {
+        var adElement = document.getElementById(containerName);
+        if (adsLoaded && adElement) {
+            adElement.style.backgroundColor = shadeSelector;
+        }
+    }
+
+    function handleCallbackTimeout(callbackObj) {
+        _log("handleCallbackTimeout", callbackObj);
+        clearTimeout(callbackObj.timeout);
+        callbackObj.timeoutCb();
+    }
+
+    function handleSerpTimeout() {
+        _log("handleSerpTimeout");
+        makeSerpVisible();
+        ask.CSA.showSerpTimeoutFired = true;
+        _showSerpTimeoutCleared = true;
+    }
+
+    function fireCSACallbacks(){
+        _log("fireCSACallbacks");
+        var csaCallbacks = [];
+
+                for(var i = 0; i < _csaCallbacksObjects.length; i++) {
+            csaCallbacks.push(_csaCallbacksObjects[i].adsCb);
+            clearTimeout(_csaCallbacksObjects[i].timeout);
+        }
+
+                _csaCallbacksObjects = [];
+        _log("csaCallbacks: ", csaCallbacks);
+        invokeCallbacks(csaCallbacks);
+    }
+
+    function invokeCallbacks(callbacks) {
+        if(callbacks.length) {
+            for(var i = 0; i < callbacks.length; i++) {
+                if(typeof callbacks[i] == "function") {
+                    _log("invoking callback " + i);
+                    try{
+                        callbacks[i].call(null);
+                    } catch(e){
+                                            }
+                }
+            }
+                        callbacks.splice(0, callbacks.length);
+        }
+    }
+
+    //reduce the ad call by 1 if the client is a android tablet and meets orientation and size criteria
+    ask.CSA.optimizeAdRequest = function optimizeAdRequest(adblock) {
+        var h = (Math.max(document.documentElement.clientHeight, window.innerHeight || 0));
+        var w = (Math.max(document.documentElement.clientWidth, window.innerWidth || 0));
+        var enabledForOrientation = "" === "true" ? true : h > w;
+        var enabled = "";
+        if(enabled === "true" && 800 > h && enabledForOrientation) {
+            if(adblock && typeof adblock.maxTop !== "undefined") {
+                adblock.maxTop -= 1;
+            }
+        }
+    }
+
+})();
+
+
+
+_googCsa('jsLoadedCallback', function () {
+
+    var pageOptions = ask.CSA.pageOptions = {"instantPreviews":false,"adPage":"1","sellerRatings":true,"attributionSpacingBelow":7,"location":false,"plusOnes":false,"query":"Goku","numRepeated":"4","domainLinkAboveDescription":true,"adtest":"off","rightHandAttribution":false,"offerExtension":false,"hl":"es","heightConstrained":true,"oe":"utf-8","adsafe":"medium","pubId":"aj-ar","isAndroidTablet":false,"ie":"utf-8","siteLinks":true,"linkTarget":"_blank","channel":"ar50,ud_desktop,chan_web","clickToCall":false};
+    if (pageOptions) {
+        pageOptions['adsResponseCallback'] = ask.CSA.handleCSAResponse;
+    }
+
+    var adblock1 = ask.CSA.adblock1 = {"lineHeightDomainLink":"16","colorAttribution":"#333333","colorBackground":"#FDFEEE","colorDomainLink":"#0E7744","colorTitleLink":"#3300B5","width":"99.5%","detailedAttribution":true,"fontFamilyAttribution":"arial","clicktrackUrl":"http://ar.ask.com/clk?pos=top&q=Goku&qid=888025FBC724450095AF5BC79B3C07FF&ip=ba388e8a&o=0&l=dir&qsrc=121&page=1&dqi=&cl=aj-ar&ch=ar50%2Cud_desktop%2Cchan_web&c=a&p_uid=&p_clk_id=&lpurl=http%3A%2F%2Far.ask.com%2Fweb%3Fq%3DGoku&lp_ref_url=&anxu=http%3A%2F%2Far.ask.com%2Fweb&pl=76cdn6%3Dnppp%262M%25%3D%26IE%3DtV1U7%26GA%3D5FnvYjoB17HymQ53QExgD2Vj2T%25tGh4a%26qp%3Dms%25pQki%26ur%3D%26ZMoq%3DF2-jg%26Aww%3D7BskD5y0K_ab9lnQi9U1kI5b_Wy8%268W%3D%25eeuKo%26iS%3D2Hw.22M%26mwl%3D%261F%3D%25QhnyfxSUIC%26%25N%3DK7cSe%26oMH%3DoS%26Dp%3Dg69%26d9%3Dh%26gK%3D%26o5B%3D%26F%3D%25&up=2a04Q%3DvgXhWh%26TR%3DP%259%26ok%3DL4O%26%2B0.4vPW3d%3DTO2%26bp.xTMNK%2B%3Dq1-AL%26zQ.ILdC0rqcXn7ah%3DG8u%25%2CYS_BDm0g5c%2CUZ%25y_hhv%26n%3D%25k3coA","fontSizeDomainLink":"13","colorAdSeparator":"#FFFFFF","clickableBackgrounds":true,"colorText":"#333333","fontSizeDescription":"13","lineHeightDescription":"16","noTitleUnderline":"false","fontSizeTitle":"15","fontSizeAttribution":"13","maxTop":"4","container":"magic1","fontFamily":"arial","verticalSpacing":"9","lineHeightTitle":"18","longerHeadlines":true};
+    if (adblock1) {
+        adblock1['noAdLoadedCallback'] = ask.CSA.handleNoTopAdsLoaded;
+        adblock1['adLoadedCallback'] = ask.CSA.handleTopAdsLoaded;
+    }
+
+            var adblock2 = ask.CSA.adblock2 = {"lineHeightDomainLink":"16","colorAttribution":"#333333","colorBackground":"#FFFFFF","colorDomainLink":"#0E7744","colorTitleLink":"#3300B5","width":"99.5%","detailedAttribution":true,"number":"5","fontFamilyAttribution":"arial","clicktrackUrl":"http://ar.ask.com/clk?pos=bottom&q=Goku&qid=888025FBC724450095AF5BC79B3C07FF&ip=ba388e8a&o=0&l=dir&qsrc=121&page=1&dqi=&cl=aj-ar&ch=ar50%2Cud_desktop%2Cchan_web&c=a&p_uid=&p_clk_id=&lpurl=http%3A%2F%2Far.ask.com%2Fweb%3Fq%3DGoku&lp_ref_url=&anxu=http%3A%2F%2Far.ask.com%2Fweb&pl=2c74vA%3DRkRR%26zlr%3D%26vR%3D9ECig%26oq%3DfNF3tRNeqsMLetndK0FU8voOFYzf2nYI%264Z%3Dk%2BBSqF%2B%26hc%3D%26lBYX%3Dxm-76%26nYX%3DNMxRK3R2R_of91geHVViz%2BDY_qgG%26U%25%3DFdCRDe%26PO%3DQRL.0kE%26SXI%3D%2651%3DtPY9cqgAkCQ%26oq%3DYfx%2Bj%26VL5%3DVb%26Pi%3DME7%265b%3Dx%26z0%3D%26zqO%3D%26K%3D1&up=052dL%3D%2BD3bCl%26Nb%3D6lo%26BL%3Dyfi%26hO.KLdcNE%3D8Zo%26e4.4qSo2s%3D29-6l%2664.Rd8tdk8hHg321%3D8JGf%2CwB_GABgPhI%2Cax6R_0rA%264%3DIDHwgFeB9","fontSizeDomainLink":"13","colorAdSeparator":"#FFFFFF","clickableBackgrounds":true,"colorText":"#333333","fontSizeDescription":"13","lineHeightDescription":"16","noTitleUnderline":"false","fontSizeTitle":"15","fontSizeAttribution":"13","container":"magic2","fontFamily":"arial","verticalSpacing":"9","lineHeightTitle":"18","longerHeadlines":true};
+        if (adblock2) {
+            adblock2['noAdLoadedCallback'] = ask.CSA.handleNoBottomAdsLoaded;
+            adblock2['adLoadedCallback'] = ask.CSA.handleBottomAdsLoaded;
+        }
+    
+    
+    var pl_rqnum = parseInt(adblock1.maxTop);
+    var blocks = ['ads',pageOptions,adblock1];
+
+    if (typeof adblock2 != 'undefined' && null != adblock2) {
+        pl_rqnum = pl_rqnum + parseInt(adblock2.number);
+        blocks.push(adblock2);
+    }
+    if (typeof adblock3 != 'undefined' && null != adblock3) {
+        pl_rqnum = pl_rqnum + parseInt(adblock3.number);
+        blocks.push(adblock3);
+    }
+
+    /* ********* if android tablet, modify the ad request here ************** */
+    if(typeof ask.CSA.optimizeAdRequest === "function" && pageOptions.isAndroidTablet === true) {
+        ask.CSA.optimizeAdRequest(adblock1);
+    }
+
+    window['backfillParam'] = window.backfillParam || {};
+    window['backfillParam']['pl_hex'] = adblock1.colorBackground ? adblock1.colorBackground : "#FFFFFF";
+    window['backfillParam']['pl_cl'] = pageOptions.pubId;
+    window['backfillParam']['pl_ch'] = pageOptions.channel;
+    window['backfillParam']['pl_type'] = 'csa';
+    window['backfillParam']['pl_rp'] = (pageOptions.numRepeated) ? true : false;
+    window['backfillParam']['pl_clksp'] = adblock1.clickableBackgrounds;
+    window['backfillParam']['pl_rqnum'] = pl_rqnum;
+    window['backfillParam']['pl_timeout'] = ask.CSA.showSerpTimeoutLength ? ask.CSA.showSerpTimeoutLength : 0;
+
+    //font related attributes
+    window['backfillParam']['pl_fsa'] = normalizeAttribute(adblock1.fontSizeAttribution);
+    window['backfillParam']['pl_fsd'] = normalizeAttribute(adblock1.fontSizeDescription);
+    window['backfillParam']['pl_fsdl'] = normalizeAttribute(adblock1.fontSizeDomainLink);
+    window['backfillParam']['pl_fst'] = normalizeAttribute(adblock1.fontSizeTitle);
+    window['backfillParam']['pl_ff'] = normalizeAttribute(adblock1.fontFamily);
+    window['backfillParam']['pl_ffa'] = normalizeAttribute(adblock1.fontFamilyAttribution);
+
+    //color related attributes
+    window['backfillParam']['pl_cla'] = normalizeAttribute(adblock1.colorAttribution);
+    window['backfillParam']['pl_cld'] = normalizeAttribute(adblock1.colorDomainLink);
+    window['backfillParam']['pl_clt'] = normalizeAttribute(adblock1.colorText);
+    window['backfillParam']['pl_cltl'] = normalizeAttribute(adblock1.colorTitleLink);
+
+    try {
+        _googCsa.apply(null, blocks);
+    } catch (err) {
+        ask.CSA.showSerp();
+    }
+
+    /*
+      Function to normalize the attribute based on its value
+      return empty string incase of undefined/null
+    */
+    function normalizeAttribute(configAttribute) {
+        if (configAttribute === null || configAttribute === undefined || configAttribute.length === 0) {
+            return "";
+        }
+        return configAttribute;
+    }
+});
+
+
+</script>
+<style type="text/css">
+    </style>
+<noscript>
+    <style type="text/css">
+        #midblock,#rightblock,#mobile-footer,.mobile-web-results,.hcsa {
+            visibility:visible !important;
+        }
+    </style>
+</noscript>
+
+    <script type="text/javascript">
+    var ss=function(){},cs=function(){};
+    var _docReadyFns = [];
+    $j = function(){return {ready:function(fn){_docReadyFns.push(fn);}};};
+
+    window.onload = function() {
+        for (var i = 0; i < _docReadyFns.length; i++) {
+            var fn = _docReadyFns[i];
+            if (typeof fn === 'function') fn.call(document, $j);
+        }
+    };
+
+    var ASKINT = ASKINT || {};
+    ASKINT.attributes = {};
+    ASKINT.cfg = (function() {
+        return {
+            "ldomain":"http://ar.ask.com" ,
+            "_ldomain":"ar.ask.com",
+            "expandSearchBoxMargin" : "70px"
+        };
+    })();
+
+        ASKINT.mapConstants = {
+        staticDomain:"http://sp.ar.ask.com/",
+        ldDomain:"http://ar.ask.com/",
+        mapProxyDomain:"http://mapx.iad.ask.com/",
+        userIP:"186.56.142.138",
+        channel:"web",
+        key: "AhD-mAuYvCfDIibv1ZaAqV5u5ETUovGCddVt7gAw-sbKtySC-mr9l4exFjSC4xbH",
+                isIE6: false    };
+
+    
+        var ENABLE_AD_CONTENT_RATIO = true;
+    ASKINT.attributes.REDIRECT_DOMAIN = true ? '' : '';
+    ASKINT.attributes.ENABLE_HOMEPAGE_V2 = false;
+    ASKINT.attributes.ENABLE_POPULAR_SEARCH_V2 = false;
+    ASKINT.attributes.ENABLE_FACEBOOK_AD_EXPERIENCE = false;
+</script>            <link type="text/css" rel="stylesheet" href="/st/c/css/ask_web-a4e050f68df0fdb5e3d4926c69f0490800c95380.css">
+        <style>
+    .vid_btn, .vid_btn2 {
+        background: url(http://sp.ar.ask.com/sh/i/a10f/btn_play.png) no-repeat scroll 0 0 transparent;
+    }
+
+    .speech {
+        background-image: url(http://sp.ar.ask.com/i/Ask16HP_Argentina_SPRITE.png);
+    }
+
+    #logo {
+        background-image: url(http://sp.ar.ask.com/i/Ask16HP_Argentina_SPRITE.png);
+                    background-position:???img.homepage.sprite.pos???;
+            }
+                                .hcsa {
+            visibility: hidden;
+        }
+                
+                                        
+        .kensaq .cssButton, .kensaq .cssButton:hover {
+            background: url("???img.webpage.sprite???");
+            background-position:0px 33px;
+            filter:none;
+        }
+        .kensaq #logo {
+            background: url("???img.webpage.sprite???");
+        }
+        
+        </style>    </head>
+<body class="a16 chrome es_AR ask">
+<div class="c2n">
+            
+    <style type="text/css">
+        .a16 .c2n {
+            height: 103px;
+        }
+    </style>
+    
+        <div id="nav" class="ur">
+                
+            
+
+        
+
+        
+            
+
+        
+
+        
+            
+
+        
+
+        
+            
+
+        
+
+        
+            
+
+        
+
+        
+
+
+        <div id="a16Cnb">
+            <div class="a16nb">
+                <div class="lm">
+                                                                    <div class="mi smi">
+                    <div style="float:left;">Respuestas</div>
+            <div style="clear:both;"></div>
+            </div>
+                        
+                                    <div class="mi ">
+                    <a onmousedown="uaction(this,{up:'e154m=PVS7O8&T=K6UYZa&42=3&yi=myse6WKmvw&sH=fLOJncuYcV&zh=Z&dk=FV6dg2zVk'});" style="display:block;" href="http://ar.ask.com/pictures?qsrc=167&qo=channelNavigation&q=Goku&o=0&l=dir">
+                <div class="tu" style="float:left;">Im&#225;genes</div>
+                <div style="clear:both;"></div>
+            </a>
+            </div>
+    
+                    
+                                    <div class="mi ">
+                    <a onmousedown="uaction(this,{up:'e11dF=bPLdRA&e=%nlk6h&X0=i&34=toShVNE+BR&qF=bZnjJMfBve&5q=P&M%=JQgUIBR2z'});" style="display:block;" href="http://ar.ask.com/youtube?qsrc=167&qo=channelNavigation&q=Goku&o=0&l=dir">
+                <div class="tu" style="float:left;">Vídeo</div>
+                <div style="clear:both;"></div>
+            </a>
+            </div>
+    
+                    
+                </div>
+
+            </div>
+        </div>
+        <div style="clear:both;"></div>
+    </div>
+
+            
+<div id="top_search">
+    <div id="logo" class="ur">
+                    <a onmousedown="uaction(this,{up:'1ce4r=0VeNCe&o=3x8CTh&oP=y&iK=iGRN+EM2JS&9s=BH8BSMrXQ6&+o=L&1z=SQt7B6zqL'});" title="ar.ask.com" href="http://ar.ask.com/?o=0&l=dir&qsrc=14137&qo=channelNavigation">
+                <span style="display:none">askLogo</span>
+            </a>
+                    
+    </div>
+        <div id="searchBox" name="searchBoxContainer" class="ur">
+        <form id="topform" action="/web">
+                <input id="qsrc_top" type="hidden" value="1" name="qsrc">
+                <input id="origin" type="hidden" value="0" name="o">
+                <input id="partnerID" type="hidden" value="dir" name="l">
+                <input id="qo" type="hidden" value="serpSearchTopBox" name="qo">
+                                <input id="top_q_comm"  data-ordinal="3" class="sb-wr ac_input" type="text" style="border-color: rgb(211, 211, 211);" value="Goku" name="q" autocomplete="off" maxlength="2048">
+                                    <input id="sbut" class="cssButton" type="submit" value=Buscar>
+                        </form>
+
+                    <div class="qatextserp"></div>
+            </div>
+</div>
+</div>
+    
+<div class="c2c fh">
+    <div id="midblock" class="c2 hcsa">
+        
+
+        <div id="magic1" class="ad-top adWrapper"></div>
+<script>
+    window['backfillParam'] = window['backfillParam'] || {};
+            window['backfillParam']['pl_tmodn'] = 1;
+        ask.CSA.startShowSerpTimeout();
+</script>
+            <div class="midTitle">
+                            <span class="grey b txt_lg">P:</span>
+                <span class="b qna-align txt_lg">Goku</span>
+                    </div>
+        <div id="teoma-results" class="rmwi content-mid" style="clear:both;">
+    <div id="lindm" class="stm">
+        
+                
+             
+                                    
+            <div class="wresult tsrc_tled">
+                                                                    <div class="ptbs ur">
+    <div id="r_t0">
+        <div>
+                            <span class="grey txt_lg b">R:</span>
+                                    <span class="b txt_lg title_delink">Dragon Ball Super: las transformaciones de <KW>Goku</KW> | RPP NOTICIAS</span>
+                                      </div>
+    </div>
+    <div class="durl" id="r_b0">
+        <span id="r$ordinal_u" class="txt3" style="margin-left:18px;">www.rpp.com.pe/2015-08-10-dragon-ball-super-las-transfo...</span>
+    </div>
+    <div class="abstract txt3" id="r$ordinal_a" style="margin-left:18px;">
+        10 Ago 2015 <KW>...</KW> El encuentro entre el saiyajin y el Dios de la Destrucci&#243;n abarc&#243; casi todo el 
+episodio y acab&#243; con <KW>Goku</KW> vapuleado sin mayor problema.
+                    <a id="r0_t2" href="http://www.rpp.com.pe/2015-08-10-dragon-ball-super-las-transformaciones-de-goku-noticia_824976.html" onmousedown="pk(this,{en:'te',b:'a001',up:'4e8dS=X30xVpOHr4&r=Gw6Wi6&At=9&sO=aUChCXJ5zCIL&gw=6rZXA&YP=m',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>
+            </div>
+</div>
+                </div>
+                     
+             
+                                    
+            <div class="wresult tsrc_tled">
+                                                                    <div class="ptbs ur">
+    <div id="r_t1">
+        <div>
+                            <span class="grey txt_lg b">R:</span>
+                                    <span class="b txt_lg title_delink">Juego <KW>Goku</KW> Vs. Vegeta Juego de Rol - Pais de los Juegos</span>
+                                      </div>
+    </div>
+    <div class="durl" id="r_b1">
+        <span id="r$ordinal_u" class="txt3" style="margin-left:18px;">www.paisdelosjuegos.com.mx/juego/naruto/goku+vs+vegeta+...</span>
+    </div>
+    <div class="abstract txt3" id="r$ordinal_a" style="margin-left:18px;">
+        Lucha como <KW>Goku</KW> o Vegeta para averiguar qui&#233;n es el guerrero m&#225;s fuerte! 
+<KW>Goku</KW> Vs. Vegeta Juego de Rol es uno de nuestros juegos de naruto 
+seleccionados.
+                    <a id="r1_t2" href="http://www.paisdelosjuegos.com.mx/juego/naruto/goku+vs+vegeta+rpg.html" onmousedown="pk(this,{en:'te',b:'a002',up:'59c4k=ZwTq2B0z4v&l=66l1P2&e%=j&do=UiDoO9reG+yz&JZ=vrdT1&Jh=k',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>
+            </div>
+</div>
+                </div>
+                     
+             
+                                    
+            <div class="wresult tsrc_tled">
+                                                                    <div class="ptbs ur">
+    <div id="r_t2">
+        <div>
+                            <span class="grey txt_lg b">R:</span>
+                                    <span class="b txt_lg title_delink">&#191;Qui&#233;n es la madre de <KW>Goku</KW>? - Batanga</span>
+                                      </div>
+    </div>
+    <div class="durl" id="r_b2">
+        <span id="r$ordinal_u" class="txt3" style="margin-left:18px;">www.batanga.com/comics/3581/quien-es-la-madre-de-goku</span>
+    </div>
+    <div class="abstract txt3" id="r$ordinal_a" style="margin-left:18px;">
+        Akira Toriyama revel&#243; hace pocos d&#237;as uno de los secretos m&#225;s importantes de 
+la franquicia manga Dragon Ball Z: la identidad de la madre de <KW>Goku</KW>.
+                    <a id="r2_t2" href="http://www.batanga.com/comics/3581/quien-es-la-madre-de-goku" onmousedown="pk(this,{en:'te',b:'a003',up:'535dc=4Esa0QJDsg&P=Vv6LQ1&nL=0&lo=W2sGOmwfdksK&mx=Ndxfe&xP=Y',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>
+            </div>
+</div>
+                </div>
+                         </div>
+</div>
+
+
+    <div class="relmod rrItem content-mid" id="mrRSM" data-boss="RLT">
+    <div id="rlTitle_0" class="sectionheader ">Explora Respuestas Acerca de</div>
+
+    <div class="fl rrmod-content">
+                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'f3f4X=gZWjqhVANAIyUyCc&I=p54CTf&G1=9&IB=0Sx5qpOz5VTLs&Ld=ZnnW&GE=G',tp:'rst',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+goku+gratis&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">juegos de <b>goku</b> gratis</a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'a65db=GfHKGthDq7gEvRVO&Q=VGzQ3J&zS=n&Ch=5Dq1g9faf3rtx&It=fWAp&Xc=B',tp:'rst',io:'2',ec:'16'})" href="http://ar.ask.com/web?q=imagenes+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">imagenes de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'93c4u=npLpeNXdi8XK8%4X&D=3Ikez7&vj=T&LZ=1EN0%df3uNxLA&F6=xck0&Ma=G',tp:'rst',io:'4',ec:'16'})" href="http://ar.ask.com/web?q=goku+super+saiyan+10&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow"><b>goku</b> super saiyan 10</a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'a78ds=kuKcSpniaKpwNb8T&G=YVRdN2&4O=S&XZ=yNPUi0GgQBWMF&Z0=LBz0&Eq=h',tp:'rst',io:'6',ec:'16'})" href="http://ar.ask.com/web?q=fotos+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">fotos de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'41947=ha%5l63WCZKuDxyK&l=0Va%41&or=Y&mV=ke70Gmg5dtfRw&Uv=Fl88&Yw=1',tp:'rst',io:'8',ec:'16'})" href="http://ar.ask.com/web?q=vestir+a+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">vestir a <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'fabdg=y3CJ%+OwuHnr+lCv&6=jZaGlC&6i=F&7I=7LvkU+WptZICm&yk=iklT&Ud=g',tp:'rst',io:'10',ec:'16'})" href="http://ar.ask.com/web?q=dibujos+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">dibujos de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'3d64x=e1k41ZqsZUkzHwlm&8=1VlD9c&8D=7&Ma=doINgz6qwJgKw&bJ=84sw&XW=o',tp:'rst',io:'12',ec:'16'})" href="http://ar.ask.com/web?q=z+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">z <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'5fedU=7%4yeZiy9cVGlzcX&P=eBPYZi&W9=1&PL=tMhAPTKSXoAgm&Ge=+UaQ&Yj=O',tp:'rst',io:'14',ec:'16'})" href="http://ar.ask.com/web?q=juegos+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">juegos <b>goku</b></a><br/>
+                </div>
+                                            </div>
+    <div class="fl" style="max-width:320px;">
+                                                                                            
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'c734x=vFz7t+myEEZIzOHz&b=RYAVwY&p8=5&dv=VTSa+BXRCiQdP&j0=Dy9v&wD=C',tp:'rst',io:'1',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+vestir+a+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">juegos de vestir a <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'971dA=I4PXU6BEQwMt76Br&C=Yy2OTN&Q2=2p&kr=iM5wEUeBb1dnu&qt=bjE6&uu=x',tp:'rst',io:'3',ec:'16'})" href="http://ar.ask.com/web?q=vidios+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">vidios de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'82bde=61%HG9ku2FVpHj%t&C=hv%cj%&4Q=yb&EF=WWt9mtKD1ZPPo&P+=3jrS&KA=K',tp:'rst',io:'5',ec:'16'})" href="http://ar.ask.com/web?q=goku+jugar&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow"><b>goku</b> jugar</a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'b65d9=KbLGKplzu3kAzNZK&U=RKvUZN&vW=if&b+=Mn83iktX3eEww&u6=+wvT&fT=d',tp:'rst',io:'7',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+pelea+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">juegos de pelea de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'31fde=GAET6UESeC3ZJs6d&s=Cf6SQI&+i=fB&XX=P8YdrtpxgNGwR&rc=zYS7&5p=0',tp:'rst',io:'9',ec:'16'})" href="http://ar.ask.com/web?q=jugar+juegos+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">jugar juegos de <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'f59dy=UcOhHCdmgq1z+mtV&i=C4S8WV&4Y=rd&W1=793HPUApKCXOp&Gz=fCvy&++=3',tp:'rst',io:'11',ec:'16'})" href="http://ar.ask.com/web?q=amigo+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">amigo <b>goku</b></a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'013d7=o4fWBy67AsgoSu%Q&q=P8TDdo&+U=Q9&9l=AqkroBZzpJqma&b%=dtqc&x8=m',tp:'rst',io:'13',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+goku+gt&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">juegos de <b>goku</b> gt</a><br/>
+                </div>
+                                                                                                        
+
+        
+
+        
+                <div class="relItem ur " data-zen="true">
+                    <a class="txt4 title" onmousedown="pk(this,{en:'r1',b:'rlt',up:'54ddR=a70MNHd3aHPqSP7Y&Q=ft7rL+&t8=si&xY=i1Qtczz1j88ca&0W=tzD7&bi=Z',tp:'rst',io:'15',ec:'16'})" href="http://ar.ask.com/web?q=peliculas+de+goku&qsrc=466&o=0&l=dir&qo=relatedSearchNarrow">peliculas de <b>goku</b></a><br/>
+                </div>
+                        </div>
+</div>
+        <div id="teoma-results" class="rmwi content-mid" style="clear:both;">
+    <div id="lindm" class="stm">
+        
+                
+             
+                                    
+            <div class="wresult tsrc_tled">
+                                                                    <div class="ptbs ur">
+    <div id="r_t0">
+        <div>
+                            <span class="grey txt_lg b">R:</span>
+                                    <span class="b txt_lg title_delink">Dragon Ball: <KW>Goku</KW> Fight - MiniJuegos.com</span>
+                                      </div>
+    </div>
+    <div class="durl" id="r_b0">
+        <span id="r$ordinal_u" class="txt3" style="margin-left:18px;">www.minijuegos.com/juego/dragon-ball-goku-fight</span>
+    </div>
+    <div class="abstract txt3" id="r$ordinal_a" style="margin-left:18px;">
+        Juega a Dragon Ball: <KW>Goku</KW> Fight. En esta versi&#243;n retro del cl&#225;sico Dragon Ball, 
+tendr&#225;s que ponerte en la piel de Son <KW>Goku</KW>, y pelear en el Torneo Mundial de&nbsp;...
+                    <a id="r0_t2" href="http://www.minijuegos.com/juego/dragon-ball-goku-fight" onmousedown="pk(this,{en:'te',b:'a004',up:'f07dQ=jnRw2hVHhr&M=H70vko&1g=a&vK=dYoKT2e36IYe&1D=5rY5i&s2=x',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>
+            </div>
+</div>
+                </div>
+                     
+             
+                                    
+            <div class="wresult tsrc_tled">
+                                                                    <div class="ptbs ur">
+    <div id="r_t1">
+        <div>
+                            <span class="grey txt_lg b">R:</span>
+                                    <span class="b txt_lg title_delink"><KW>Goku</KW> Para Presidente | Por un mundo mejor</span>
+                                      </div>
+    </div>
+    <div class="durl" id="r_b1">
+        <span id="r$ordinal_u" class="txt3" style="margin-left:18px;">gokuparapresidente.com/</span>
+    </div>
+    <div class="abstract txt3" id="r$ordinal_a" style="margin-left:18px;">
+        <KW>Gok&#250;</KW> finalmente se enfrenta a Bills, un villano que no ser&#225; f&#225;cil para el h&#233;roe de 
+nuestra infancia. En este adelanto, que l&#237;neas m&#225;s abajo puedes ver en su&nbsp;...
+                    <a id="r1_t2" href="http://gokuparapresidente.com/" onmousedown="pk(this,{en:'te',b:'a005',up:'7cd4N=0Y3Cyh+u7p&x=KEvcc7&Cm=r&P2=9+Ke3J5kWuHT&03=+1vGa&vA=U',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>
+            </div>
+</div>
+                </div>
+                         </div>
+</div>
+
+
+<div class="midTitle" style="padding:10px 30px 0 10px;">
+            <span class="b qna-align txt_lg sectionheader"><b>P&R m&#225;s destacadas</b></span>
+    </div>
+
+
+<div id="teoma-results" class="rmwi content-mid" style="clear:both;">
+    <div id="lindm" class="stm">
+        
+                
+            
+                                    
+            <div class="wresult tsrc_answ">
+                                                        <div class="ptbs">
+    <div id="qna">
+        <div class="ur">
+                        <span class="grey b valign txt_lg">P:</span>
+                            <span class="b qna-align txt_lg wrapTitle">&#191; quien es <KW>goku</KW> , ayuda no se quien es ?</span>
+                    </div>
+        <div id="r_t0" class="ur">
+                        <span class="grey b valign txt_lg qna-a">R:</span>
+            <span class="txt3 qna-align qna-abs">ayyyy. soku es un personage de la serie animada &quot;Dragon Ball, Dragon Ball Z, Dragon Ball Gt,Dragon Ball Af&quot; am para mi es uno de los personages principales!
+                            <a id="r0_t2" onmousedown="pk(this,{en:'af',b:'a006',up:'db4dU=6YJne+JlYC&y=%dsdAZ&MY=g&xO=QXTeEQSHC&5s=UtSdHvhB7p&Gz=n',ex:'tsrc%3Dansw'})" href="http://es.answers.yahoo.com/question/index?qid=20120922180809AATeemP" class="title tdn" style="white-space: nowrap;" target="_blank"> Leer m&#225;s &raquo;</a></span>
+                    </div>
+        <div class="srctext">
+            <span class="b grey">Fuente: </span>
+            <span class="attrib">http://es.answers.yahoo.com/question/index?qid=20120922...</span>
+        </div>
+    </div>
+</div>                        </div>
+                    
+            
+                                    
+            <div class="wresult tsrc_answ">
+                                                        <div class="ptbs">
+    <div id="qna">
+        <div class="ur">
+                        <span class="grey b valign txt_lg">P:</span>
+                            <span class="b qna-align txt_lg wrapTitle">&#191;como vuelo como <KW>goku</KW>?</span>
+                    </div>
+        <div id="r_t1" class="ur">
+                        <span class="grey b valign txt_lg qna-a">R:</span>
+            <span class="txt3 qna-align qna-abs">jajajajjajajajajjajajajajajajajajjajajaj&#8230;. ven a mi casa y te doy lecciones de vuelo ajajajajjaajajajjajaja. y si no tienes plata para el bus siegue mis siguentes pasos: 1. coma frijol a la lataa. 2. tirese 30 pedos seguidos ( bien ediondos...
+                            <a id="r1_t2" onmousedown="pk(this,{en:'af',b:'a007',up:'55f4r=0cFZkfzzF7&J=x0VaJd&K8=K&JS=DfqXxzcC2&O3=AR%tJgHZ32&Mu=M',ex:'tsrc%3Dansw'})" href="http://es.answers.yahoo.com/question/index?qid=20110522113200AA5o1ft" class="title tdn" style="white-space: nowrap;" target="_blank"> Leer m&#225;s &raquo;</a></span>
+                    </div>
+        <div class="srctext">
+            <span class="b grey">Fuente: </span>
+            <span class="attrib">http://es.answers.yahoo.com/question/index?qid=20110522...</span>
+        </div>
+    </div>
+</div>                        </div>
+                    
+            
+                                    
+            <div class="wresult tsrc_answ">
+                                                        <div class="ptbs">
+    <div id="qna">
+        <div class="ur">
+                        <span class="grey b valign txt_lg">P:</span>
+                            <span class="b qna-align txt_lg wrapTitle">&#191;porque <KW>goku</KW> esta triste?</span>
+                    </div>
+        <div id="r_t2" class="ur">
+                        <span class="grey b valign txt_lg qna-a">R:</span>
+            <span class="txt3 qna-align qna-abs">bueno lo de que lo comparen seamos sinceros naruto nunca llegara a su nivel pero yo creo que esta triste porque mayormente lo alaban demasiado los fanboys solo recordando mayormente su poder tratandolo como un dios y no las cosas de el como...
+                            <a id="r2_t2" onmousedown="pk(this,{en:'af',b:'a008',up:'ba3dj=j96ztBzi+j&T=Sqq34%&1f=z&Ii=BX21VB0Jl&Bz=bI+jfclGWC&vD=t',ex:'tsrc%3Dansw'})" href="http://mx.answers.yahoo.com/question/index?qid=20120430150759AAkDTph" class="title tdn" style="white-space: nowrap;" target="_blank"> Leer m&#225;s &raquo;</a></span>
+                    </div>
+        <div class="srctext">
+            <span class="b grey">Fuente: </span>
+            <span class="attrib">http://mx.answers.yahoo.com/question/index?qid=20120430...</span>
+        </div>
+    </div>
+</div>                        </div>
+                    
+            
+                                    
+            <div class="wresult tsrc_answ">
+                                                        <div class="ptbs">
+    <div id="qna">
+        <div class="ur">
+                        <span class="grey b valign txt_lg">P:</span>
+                            <span class="b qna-align txt_lg wrapTitle">&#191;cual es el apellido de <KW>goku</KW>?</span>
+                    </div>
+        <div id="r_t3" class="ur">
+                        <span class="grey b valign txt_lg qna-a">R:</span>
+            <span class="txt3 qna-align qna-abs">son <KW>goku</KW>? pero ese no es si es una manera de presentarlos. el asunto que en el p&#237;rmer torneo de artes marciales al que asisten lo llaman asi ( creo que feu ek primero, puede haber sido otro) y todo quedan sorprendidos. debia ser el apellido...
+                            <a id="r3_t2" onmousedown="pk(this,{en:'af',b:'a009',up:'6e048=Af2%HhbcN9&C=GTVklT&Kx=MH&Om=UPvHz7Q3o&JO=98VVP1JF8M&vZ=h',ex:'tsrc%3Dansw'})" href="http://es.answers.yahoo.com/question/index?qid=20090720154231AAQuYGw" class="title tdn" style="white-space: nowrap;" target="_blank"> Leer m&#225;s &raquo;</a></span>
+                    </div>
+        <div class="srctext">
+            <span class="b grey">Fuente: </span>
+            <span class="attrib">http://es.answers.yahoo.com/question/index?qid=20090720...</span>
+        </div>
+    </div>
+</div>                        </div>
+                    
+            
+                                    
+            <div class="wresult tsrc_answ">
+                                                        <div class="ptbs">
+    <div id="qna">
+        <div class="ur">
+                        <span class="grey b valign txt_lg">P:</span>
+                            <span class="b qna-align txt_lg wrapTitle"><KW>goku</KW> o jori?</span>
+                    </div>
+        <div id="r_t4" class="ur">
+                        <span class="grey b valign txt_lg qna-a">R:</span>
+            <span class="txt3 qna-align qna-abs">ninguno, es conforme a la capacidad y habilidad que tengas para cada p&#232;rsonaje , comomanejarlo e intentar nuevos combos o glichts. espero t aya servido de algo. Fuente(s): experiencia!!
+                            <a id="r4_t2" onmousedown="pk(this,{en:'af',b:'a010',up:'3c84F=c0s4XnfvFB&i=knLEn1&Ys=at&oV=GbtSK7bQW&lw=y3+2ShB9Nr&1Q=A',ex:'tsrc%3Dansw'})" href="http://es.answers.yahoo.com/question/index?qid=20080605132026AAOLinh" class="title tdn" style="white-space: nowrap;" target="_blank"> Leer m&#225;s &raquo;</a></span>
+                    </div>
+        <div class="srctext">
+            <span class="b grey">Fuente: </span>
+            <span class="attrib">http://es.answers.yahoo.com/question/index?qid=20080605...</span>
+        </div>
+    </div>
+</div>                        </div>
+                        </div>
+</div>
+
+
+
+
+<div id="magic2" class="adWrapper"></div>
+<script>
+    window['backfillParam'] = window['backfillParam'] || {};
+            window['backfillParam']['pl_bmodn'] = 5;
+    </script>
+  
+         <div id="paging" class="p20">
+                        <div style="margin: 0 10px 0 0" class="dsi">
+                                                            <div class="pgc pgcsel"><div class="pg">1</div></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=2&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">2</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=3&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">3</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=4&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">4</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=5&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">5</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=6&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">6</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=7&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">7</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=8&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">8</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=9&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">9</a></div>
+                
+                                                <div class="pgc"><a href="http://ar.ask.com/web?q=Goku&page=10&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir" class="pg title">10</a></div>
+                
+                        </div>
+                            <div style="padding:1px 0 0 8px;float:left">
+                                        <a id="nextPageLink" class="txt3 title l_nu" href="http://ar.ask.com/web?q=Goku&page=2&amp;qid=888025FBC724450095AF5BC79B3C07FF&amp;qsrc=121&amp;o=0&amp;l=dir">Siguiente&#160;&#187;</a>
+                </div>
+                        <div class="cl"></div>
+         </div>
+  
+    </div>
+    <div id="rightblock" class="c1 hcsa">
+        
+            <div class="rrmod rrItem content-right" id="rrRS" style="padding-bottom:16px;" data-boss="RLT">
+            <div id="rlTitle_3" class="sectionheader">Explora Respuestas Acerca de</div>
+                                    
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'8b04H=ecxOVMxONhlvp&i=pZrFZ&o6=5&X1=81jbBL9nhsLgJ&vE=bHkU&B1=O',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+goku+gratis&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">juegos de <b>goku</b> gratis</a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'ce2dI=jF4O1WRetB3Oe&b=2A0A6&KU=s&7x=Mh7kEm6AiRsYf&7E=PjzM&Ag=9',io:'1',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+vestir+a+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">juegos de vestir a <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'21141=7%U72aF6+beM4&H=5elxo&Df=s&9e=yRgoi6RAfgdrY&OT=mb7U&KM=5',io:'2',ec:'16'})" href="http://ar.ask.com/web?q=imagenes+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">imagenes de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'111dt=rHNk8d6xz+KSj&2=dp4GL&kX=R&gU=OVKsGfdti16Cf&wL=ehfm&Me=6',io:'3',ec:'16'})" href="http://ar.ask.com/web?q=vidios+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">vidios de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'15246=468FL8%9F70ij&A=6enpG&94=l&Gc=8H6SDVWwl6ATP&Bu=gPTM&%+=Q',io:'4',ec:'16'})" href="http://ar.ask.com/web?q=goku+super+saiyan+10&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow"><b>goku</b> super saiyan 10</a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'d60dC=kRyKu%PcqRtOF&t=WCTUs&Of=R&XD=BEpsXLSK5gI%u&ym=324Y&Qr=E',io:'5',ec:'16'})" href="http://ar.ask.com/web?q=goku+jugar&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow"><b>goku</b> jugar</a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'a734F=nNrdlheGwMRQr&J=IMM45&DI=v&QI=3i1kP1C0OF3jx&FJ=IOqM&yp=S',io:'6',ec:'16'})" href="http://ar.ask.com/web?q=fotos+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">fotos de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'dcfdn=Jm4gSWPvNUXS1&N=UrctU&oz=K&T0=ULPAd9MDkV7OL&se=sfdj&2G=6',io:'7',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+pelea+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">juegos de pelea de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'1744v=k0%y5ucu0X69G&U=cxMbQ&Ut=F&Sr=zpiz87aHSKSwm&JP=not9&JM=U',io:'8',ec:'16'})" href="http://ar.ask.com/web?q=vestir+a+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">vestir a <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'e5ed1=mu6+1PPFpyXh8&c=S9OFS&lE=Am&au=HEeZSHKueJ4Gm&5D=W2cz&D2=0',io:'9',ec:'16'})" href="http://ar.ask.com/web?q=jugar+juegos+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">jugar juegos de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'ff6d5=FmyRFjFZrG+cw&Y=sGA3Q&wP=AK&Z2=jmFU8ONM8bJlS&WW=Y9qu&4L=B',io:'10',ec:'16'})" href="http://ar.ask.com/web?q=dibujos+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">dibujos de <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'98edC=rJw2Qi2MZhTEr&b=zKSUi&ct=5B&h4=qABiRolytaVvR&gK=vL+W&Y1=H',io:'11',ec:'16'})" href="http://ar.ask.com/web?q=amigo+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">amigo <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'b26dG=KB1IuOS62p8AR&X=+iFgh&oD=5Y&7B=4j3c7upRlEB+l&84=xTnR&mL=h',io:'12',ec:'16'})" href="http://ar.ask.com/web?q=z+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">z <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'4bedd=wZZTFOdTy3Q1M&b=glX%L&5i=zQ&oD=+xYDQ7YDICMkk&tR=5u7h&h0=o',io:'13',ec:'16'})" href="http://ar.ask.com/web?q=juegos+de+goku+gt&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">juegos de <b>goku</b> gt</a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'656dh=OQrzjh5bA%4Xa&W=SVJvK&fs=yb&ca=Ngox6b2WA7s0Q&j+=8Ckd&HK=0',io:'14',ec:'16'})" href="http://ar.ask.com/web?q=juegos+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">juegos <b>goku</b></a><br/>
+            
+        </div>
+                                
+
+        
+
+        
+        <div class="rrItem rr-div ur">
+                            <a class="rrtitle title" onmousedown="pk(this,{en:'nafz',b:'rlt',up:'feedR=BcqLthp19MNn6&a=YZ2nc&X8=44&wc=VujXQNzIY5D+Q&GY=Ee4E&C0=7',io:'15',ec:'16'})" href="http://ar.ask.com/web?q=peliculas+de+goku&qsrc=6&o=0&l=dir&qo=relatedSearchNarrow">peliculas de <b>goku</b></a><br/>
+            
+        </div>
+    </div>
+    <div class="rrmod content-right">
+    <div class="sectionheader">Respuestas</div>
+
+        
+        
+                    <div class="wiki-rr rr-div ur">
+    <div class="wiki-title">
+                    <span class="b txt_lg">Son <KW>Gok&#363;</KW> </span>
+            </div>
+
+    <div class="wiki-body">
+        
+        El personaje de <KW>Gok&#363;</KW>, creado por Akira Toriyama, se encuentra basado en uno 
+... Seg&#250;n el manga Dragon Ball Minus, <KW>Gok&#363;</KW> tras nacer fue puesto a dormir en&nbsp;...
+
+                        <a id="r4_t2" href="https://es.wikipedia.org/wiki/Son_Gokū" target="_blank"
+                   class="L2 title tdn" onmousedown="pk(this,{en:'nwes',b:'SA',up:'186dU=Y6K7V1xNo+&9=xwCpH&QR=I&fm=yDcz&uq=W0WYgm2SaPg&tb=9&jjG=RK6yH',ex:'tsrc%3DWiki-SA'})">Leer m&#225;s &raquo;</a>
+            </div>
+
+            <div style="padding-top:5px;">
+            <span class="txt3 info b">Buscar:</span>
+                            
+
+        
+
+        
+            <a class="title txt3 tdn" href="http://ar.ask.com/pictures?q=&qsrc=1582&o=0&l=dir" onmousedown="pk(this,{en:'nwes',b:'SA',up:'3bfdz=4G2nDIYGM0&H=3wy8O&uU=y&ZE=ICxv&Ly=SyidPAvgkFS&2Y=D&214=ZyVxt',io:'3',ex:'tsrc%3DWiki-SA'})">Images</a>
+        </div>
+                <div class="wiki-goto">
+            <span class="txt3 info b">Fuente:</span>
+            <span>
+                <a class="title txt3 pr2 tdn" href="https://es.wikipedia.org/wiki/Son_Gokū" onmousedown="pk(this,{en:'nwes',b:'SA',up:'018du=1gqpKV1O1O&n=gVZr%&2W=x&qj=ld7j&1P=xv+8BGZPdUW&bY=1&HQ+=uQmL9',io:'2',ex:'tsrc%3DWiki-SA'})"         target="_blank"
+    
+>Wikipedia</a>
+            </span>
+        </div>
+    </div>            
+        
+                
+                    <div class="delta-rr ptbs rr-div ur">
+    <div id="r_t0">
+                    <span class="txt_lg b">Son <KW>Goku</KW> - Dragon Ball Wiki</span>
+            </div>
+    <div class="durl" id="r_b0">
+        <span id="r0_u">es.dragonball.wikia.com/wiki/Son_Goku</span>
+    </div>
+    <div class="abstract txt3" id="r0_a">
+        Son <KW>Goku</KW> (&#23403; &#24735;&#31354;, Son Gok&#363;) es el personaje principal del manga y anime 
+Dragon Ball, y...  <a id="r0_t2" href="http://es.dragonball.wikia.com/wiki/Son_Goku" onmousedown="pk(this,{en:'rrd',b:'rrd',up:'a91dn=8BdVtlXWol&s=1WDFu&GH=U&nC=+FvoNg33n6S9&%H=xOmmL&R%=C',ex:'tsrc%3Dtled'})"         target="_blank"
+    
+ class="tdn title dsib">Leer m&#225;s &raquo;</a>     </div>
+</div>            </div>
+
+    </div>
+</div>
+<div class="clr"></div>
+<div id="shadow"></div>
+<div id="serp_ftr" class="txt2">
+    <div class="pb10 ur">
+        <a onmousedown="uaction(this,{up:'987dG=Q+P8Q%yAQ&o=8JVWWn&VX=x&sb=uB5apv4l3F&tJ=0qwOjrV6kG&Hs=j&y+=TsYLyM0%E'});" href="http://sp.ar.ask.com/docs/legal/privacy.html" class="link grey ur" target="_top">PolÍtica de Privacidad</a>
+    <span class="separator">&middot;</span>
+    <a onmousedown="uaction(this,{up:'324dC=+L97mhyCz&6=QOR%kv&4I=F&Dx=OphJg3j7rT&NG=XmTYP5jro2&%2=W&AF=ECHivtrKP'});" href="http://sp.ar.ask.com/docs/legal/terms_of_service.html" class="link grey ur" target="_top">Condiciones de Servicio</a>
+        <span class="pl30">&#169; 2015 Ask.com</span>
+</div>
+</div>
+
+            <script src="/st/c/js/ask_web-5f986182682495408407a07cc9331fce0b191cdb.js" type="text/javascript"></script>
+        
+
+
+<script type="text/javascript">
+    ASKINT.ssCfg = (function(){
+
+        return {
+                                        "topOffset":2,
+                                    
+            "channel":"web",
+            "path":"web",
+            "disableTurnOffLink":"true",
+            "disableSS": false,
+            "server":"ss.ar.ask.com/solr",
+            "ldomain":"http://ar.ask.com/",
+            "ssBold":"'false'",
+            "clearSearchHistory":"",
+            "max":"",
+            "ssFromQueryHistory":"false",
+            "queryHistory":"",
+            "txtTurnOffSuggestions": "Turn off suggestions",
+            "queryHistoryContentColor":"",
+            "ssContentColor":"'false'",
+            "ssContentColorCode": "",
+            "ssItems":"",
+            "cid":"ask",
+            "token":"c3dcb4c4daa0ab7469f227817bd411b0",
+            "lang":"es",
+            "appendParams":(function(){
+                var appendParams = new Array();
+
+                return appendParams;
+            })()
+        };
+    })();
+
+</script>
+        
+<script type="text/javascript">
+                var UInfo = window.UInfo || {};
+        UInfo.pl = "5e1dWo=UoDj&IQ3=&av=Ct5Wj&Vc=gYhJkHZnyyXW6m0ZJf9OHHapfE6%68Fq&1k=EhToNKc&z5=&YRyJ=eg-ye&JXQ=Kk4JXmjsJ_59G0QXWrXh3HGE_Idj&KN=u13qLK&gS=ICF.8ng&GGn=l5hNE-I7CF.7wRliVU9929t+Cwc911cQ&2D=r3RNoUGJjNi&rL=fmXpb&cXN=Nf&e6=72a&ro=O&Lx=&69w=&1=g";
+        </script>
+
+
+            <script type="text/javascript" src="http://sp.ar.ask.com/sh/ads/ads.js">
+        </script>
+                    
+                    <script type="text/javascript">
+var _AnemoneParams2 = {
+	appId: 'T2_AskInt',
+	appVersion: '337051e',
+	appDate: '2015-09-09T09:29:00Z',
+    serverName: 'askint008iad.io.askjeeves.info',
+	uniqueUser: 'F49344D9-9520-4046-9A87-C9E44B3FEB0D',
+	backFillRequired: true,
+    suppressCookies: false,
+	eventId: 'FEC19BE4-C729-44B6-A44F-2320F13E7008',
+    browserLanguage: '',
+    maxSession: 30,
+	domain: '.ask.com',
+	url: '/ulog',
+	logPageView: false
+};
+</script>
+<script type="text/javascript" src="/st/c/js/ask_unified-846e61d9870534b40a64bd4c1252bf1d0f50c43f.js"></script>
+            <script type="text/javascript">
+        var ask = ask || {};
+
+        (function(){
+            var _timedOut = false,
+                    _fullPayload = window.backfillParam || {},                     _timeFromSerpStart = null,
+                                _adsLoggingTimeout = null,
+                    _dynamicLoggingTimeout = null;
+
+        
+
+            try{
+                _timeFromSerpStart = ((new Date() - ask.CSA.startTime) - ask.CSA.showSerpStartTime);
+                            _adsLoggingTimeout = parseInt('2000') - _timeFromSerpStart;
+                _dynamicLoggingTimeout = Math.max(_adsLoggingTimeout, 1);
+            }catch(e){
+                            _dynamicLoggingTimeout = 2000;
+            }
+
+            function mixinCSAAdData(payload){
+                var externalData = {
+                    csaInfo: {
+                                            domTime: ask.CSA.domReadyTime ? ask.CSA.domReadyTime : 0,
+                                            adsResponseTime: ask.CSA.responseTime ? ask.CSA.responseTime : 0,
+                                            adsShownTime: ask.CSA.adsShownTime ? ask.CSA.adsShownTime : 0,
+                                            serpShownTime: ask.CSA.serpShownTime ? ask.CSA.serpShownTime : 0,
+                                            supplement: _timedOut,
+                                            serpTimedOut: !!ask.CSA.showSerpTimeoutFired,
+                                            serpTimeoutStartTime: ask.CSA.showSerpStartTime ? ask.CSA.showSerpStartTime : 0,
+                                            pageReadyTime: ask.CSA.atfReadyTime ? ask.CSA.atfReadyTime : 0,
+                                            dynamicTimeout: _dynamicLoggingTimeout
+                    }
+                };
+                if (ENABLE_AD_CONTENT_RATIO) {
+                                    externalData.csaInfo.viewportHeight = ask.CSA.viewportHeight ? ask.CSA.viewportHeight : 0;
+                                    externalData.csaInfo.viewportWidth = ask.CSA.viewportWidth ? ask.CSA.viewportWidth : 0;
+                                    externalData.csaInfo.adContentRatio = ask.CSA.adContentRatio ? ask.CSA.adContentRatio : 0;
+                                    externalData.csaInfo.csaHeight = ask.CSA.csaHeight ? ask.CSA.csaHeight : 0;
+                                    externalData.csaInfo.csaWidth = ask.CSA.csaWidth ? ask.CSA.csaWidth : 0;
+                                    externalData.csaInfo.centerRailHeight = ask.CSA.centerRailHeight ? ask.CSA.centerRailHeight : 0;
+                                    externalData.csaInfo.centerRailWidth = ask.CSA.centerRailWidth ? ask.CSA.centerRailWidth : 0;
+                                    externalData.csaInfo.rightRailHeight = ask.CSA.rightRailHeight ? ask.CSA.rightRailHeight : 0;
+                                    externalData.csaInfo.rightRailWidth = ask.CSA.rightRailWidth ? ask.CSA.rightRailWidth : 0;
+                }
+                payload.pl_time = ask.CSA.responseTime ? ask.CSA.responseTime : 0;
+                payload.pl_tnum = ask.CSA.numTopAds ? ask.CSA.numTopAds : 0;
+                payload.pl_bnum = ask.CSA.numBottomAds ? ask.CSA.numBottomAds : 0;
+                payload.pl_rrnum = ask.CSA.numRightAds ? ask.CSA.numRightAds : 0;
+                payload.pl_rnum = parseInt(payload.pl_tnum) + parseInt(payload.pl_bnum) + parseInt(payload.pl_rrnum);
+
+                try{
+                    mixinNavigationTimingInfo(externalData);
+
+                    payload.pl_edata = JSON.stringify(externalData);
+                }catch(e){
+                                }
+            }
+
+                        function mixinNavigationTimingInfo(eData) {
+                if (typeof window.performance === 'undefined') {
+                    return;
+                }
+
+                var navInfo = eData["navInfo"] = {},
+                    csaInfo = eData.csaInfo,
+                    timing = window.performance.timing,
+                    navigation = window.performance.navigation,
+                    navStart = timing.navigationStart;
+
+                navInfo.redirectCount = navigation.redirectCount;
+                navInfo.navType = navigation.type;
+                csaInfo.csaStartTime = (ask.CSA.startTime.getTime() - navStart);
+
+                for (var k in timing) {
+                                        navInfo[k] = Math.max((timing[k] - navStart), 0);
+                }
+            }
+
+            if (ask && ask.CSA) {
+                ask.CSA.addCSALoadCallback(function(){
+                                                    var payload = _timedOut ? { pl_supplement: true } : _fullPayload;
+                    if(typeof ask.CSA.calculateAdContentMetrics === "function") {
+                        ask.CSA.calculateAdContentMetrics();
+                    }
+                    mixinCSAAdData(payload);
+
+                    logBackfillEvent(payload);
+                }, function(){
+                                    _timedOut = true;
+
+                    logBackfillEvent(_fullPayload);
+                }, _dynamicLoggingTimeout);
+            } else {
+                logBackfillEvent(_fullPayload);
+            }
+
+            function logBackfillEvent(payload) {
+                if (ask && typeof ask.scriptLoader != "undefined") {
+                                        ask.scriptLoader.ready("unified", logEvent);
+                } else {
+                    ask.backFillPayload = payload;
+                                        logEvent();
+                }
+
+                function logEvent(){
+                    payload['anxi'] = JSUtil.defaultVal(_AnemoneParams2.eventId, '');
+                    if(true) {
+                        payload.pl_as = !window.canRunAds ? true : false;
+                    }
+                    _Anemone.logEvent('BackFill', payload);
+                }
+            }
+        })();
+    </script>
+                                <script>
+        window.addEventListener('load', function() {
+        setTimeout(function () {
+            if (
+                    typeof getNavigationTimingInfo === "function" &&
+                    typeof _Anemone === "object"
+                    ) {
+
+                if (
+                        ask &&
+                        ask.backFillPayload &&
+                        ask.backFillPayload.pl_edata &&
+                        JSON.parse(ask.backFillPayload.pl_edata).navInfo &&
+                        JSON.parse(ask.backFillPayload.pl_edata).navInfo.loadEventEnd
+                        ) {
+                    console.log("abort 2nd backfill ", JSON.parse(ask.backFillPayload.pl_edata).navInfo.loadEventEnd);
+                    return;
+                }
+
+                var navInfo = getNavigationTimingInfo(window),
+                        payload = {};
+                if (navInfo) {
+                    payload.pl_edata = {};
+                    payload.presentation = {"count": 0};
+                    payload.provider = {};
+                    payload.pl_bfj = JSON.stringify(payload);
+                    payload.pl_edata.navInfo = navInfo;
+                    payload.pl_edata = JSON.stringify(payload.pl_edata);
+                    //console.log("nav info ",JSON.parse(payload.pl_edata));
+                    payload['anxi'] = JSUtil.defaultVal(_AnemoneParams2.eventId, '');
+                    _Anemone.logEvent('BackFill', payload);
+                }
+            }
+        }, 0);
+    });
+</script>
+                                <span style="display:none">
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-6220869-29']);
+        _gaq.push(['_trackPageview']);
+        _gaq.push(['_trackPageLoadTime']);
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+</span>
+<span style="display:none">
+    <script type="text/javascript">
+        function addEvent(obj, evType, fn){
+            if (obj.addEventListener){
+                obj.addEventListener(evType, fn, false);
+                return true;
+            } else if (obj.attachEvent){
+                var r = obj.attachEvent("on"+evType, fn);
+                return r;
+            } else {
+                return false;
+            }
+        }
+
+        function comScore(){
+            var host = (("https:" == document.location.protocol) ? "https://sb" : "http://b");
+            var headTag = document.getElementsByTagName("head")[0];
+            var scanalytics = document.createElement("script");
+            scanalytics.setAttribute("type", "text/javascript");
+            scanalytics.setAttribute("async", "true");
+            scanalytics.setAttribute("src", host + ".scorecardresearch.com/beacon.js");
+            scanalytics.onload = scanalytics.onreadystatechange = function(){
+                try {
+                    COMSCORE.beacon({
+                        c1:2,
+                        c2:6034776,
+                        c3:"",
+                        c4:"",
+                        c5:"",
+                        c6:"",
+                        c15:""
+                    });
+                } catch(err) {
+                }
+            };
+            headTag.appendChild(scanalytics);
+        }
+        addEvent(window, 'load', comScore);
+        </script>
+    <noscript> <img src="http://b.scorecardresearch.com/p?c1=2&c2=6034776&c3=&c4=&c5=&c6=&c15=&cj=1" /> </noscript>
+</span>
+<script type="text/javascript">
+            (function() {
+        function async_load(script_url){
+            var protocol = ('https:' == document.location.protocol ? 'https://' : 'http://');
+            var s = document.createElement('script'); s.src = protocol + script_url;
+            var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);
+        }
+        pf_company_code = '325BDADA1EF94958';
+        jQuery(document).ready(function(){async_load('asset.pagefair.com/measure.min.js')});
+    })();
+</script>
+
+<script type="text/javascript">
+    var ask = ask || {},
+        sp = sp || {};
+    sp.site = '';
+    sp.gls_top = parseInt('$gslTop');
+    sp.gls_bottom = parseInt('$gslBottom');
+    sp.ad_count = (window['google_ads']) ? window['google_ads'].length : (sp.gls_top + sp.gls_bottom);
+    ask.adsPixelTimeout = 2000;
+
+    function initPixel(cb, cbTimeout) {
+        if (ask && ask.CSA) {
+            ask.CSA.addCSALoadCallback(function() {
+                cb(true);
+            }, function(){
+                cbTimeout();
+            }, ask.adsPixelTimeout);
+        } else {
+            cb(false);
+        }
+    }
+
+    function createDummyAdNodes(){
+        var numAds = (ask.CSA.numTopAds + ask.CSA.numBottomAds),
+            wrapperId = "ad_clone_wrapper",
+            adTemplate = "<div class='spl_ad_plus'><a/></div>",
+            elem = "<div id='" + wrapperId + "'/>";
+
+        $j(document.body).append(elem);
+        var wrapper = $j("#" + wrapperId)
+        wrapper.css("visibility", "hidden");
+
+        for(var i=0; i<numAds; i++) {
+            wrapper.append(adTemplate);
+        }
+    }
+
+    $j(document).ready(function(){
+        if (ask && ask.CSA && typeof ask.CSA.domReady == "function") {
+            ask.CSA.domReady();
+        }
+    });
+</script>
+
+
+
+
+
+
+
+
+
+    
+</body>
+</html>
+
+    
+

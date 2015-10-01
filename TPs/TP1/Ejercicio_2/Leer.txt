@@ -1,0 +1,6 @@
+Modo de Uso en consola:
+python ejer2.py parametro_de_consulta
+
+Ej.
+
+python ejer2.py tubo
