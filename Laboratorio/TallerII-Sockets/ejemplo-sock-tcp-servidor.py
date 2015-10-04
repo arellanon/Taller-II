@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
 import socket
 from sys import argv
 
 buff_size = 4096
-host, port = "192.168.110.107", 8000
+host, port = "127.0.0.1", 8000
 backlog = 5
 
 s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -30,9 +29,7 @@ while True:
 s.close()
 
 def main():
-	
 	return 0
 
 if __name__ == '__main__':
 	main()
-
