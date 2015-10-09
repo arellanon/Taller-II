@@ -1,0 +1,5 @@
+GET http://www.labredes.unlu.edu.ar/sites/www.labredes.unlu.edu.ar/files/site/data/bdm/clase_3_db_multidimensionales.pdf HTTP/1.1
+Host: www.unlu.edu.ar
+Accept: text/html
+User-Agent: Mozilla/5.0 (X11;Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.245485 Safari/537.36
+

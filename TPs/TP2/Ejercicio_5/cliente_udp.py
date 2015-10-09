@@ -4,7 +4,7 @@ import socket
 import sys
 arglen=len(sys.argv)
 if arglen<3:
-    print('Ejecutar como: python cliente_udp.py <ip_address> <data>')
+    print('Ejecutar como: python cliente_udp.py <ip_address> <port>')
     exit()
 s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 port=8000
