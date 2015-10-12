@@ -1,8 +1,8 @@
 HTTP/1.1 200 OK
-Date: Sun, 11 Oct 2015 22:07:25 GMT
-Server: Apache
-Cache-Control: max-age=3600
-Expires: Sun, 11 Oct 2015 23:07:25 GMT
-Vary: Accept-Encoding
-Transfer-Encoding: chunked
-Content-Type: text/html; charset=iso-8859-1
+Date: Mon, 12 Oct 2015 00:04:44 GMT
+Server: Apache/2.4.7 (Ubuntu)
+Last-Modified: Sun, 11 Oct 2015 23:40:34 GMT
+ETag: "1d870-521dcbd386222"
+Accept-Ranges: bytes
+Content-Length: 120944
+Content-Type: application/pdf
