@@ -1,23 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import socket
-import time
+import socket, time
 
-class Server:
+class ServerHttp:
 ### Class server HTTP
 
-    def __init__(self, port = 8000):
+    def __init__(self, host = '0.0.0.0', port = 8000, recv_buffer = 1024, listen = 5):
     ### Constructor
-        self.host = ''
+        self.host = host
         self.port = port
-        self.www_dir = 'www' # Directorio raiz
+        self.recv_buffer = recv_buffer
+        self.listen = listen
+        self.ROOT_DIR = 'www' # Directorio raiz
 
     def iniciar_server(self):
     ### Iniciar conexion
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             print "Corriendo servidor - %s:%s" % (self.host, self.port)
-            self.socket.bind((self.host, self.port))
+            self.socket_server.bind((self.host, self.port))
 
         except Exception as e:
             print "ERROR: Falla en la conexion de socket."
@@ -32,7 +33,6 @@ class Server:
     ### Cerrar conexion
         try:
             s.socket.cerrar_server(socket.SHUT_RDWR)
-
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
 
@@ -55,9 +55,9 @@ class Server:
     def esperando_conexiones(self):
         while True:
             print "Esperando conexiones..."
-            self.socket.listen(5) # maxima cantidad de conexiones
+            self.socket_server.listen(self.listen) # maxima cantidad de conexiones
 
-            conn, addr = self.socket.accept()
+            conn, addr = self.socket_server.accept()
 
             print "Conexion desde:", addr
 
@@ -78,7 +78,7 @@ class Server:
                 if (file_requested == '/'):
                     file_requested = '/index.html' # si es vacio por defecto devolvemos index.html
                     
-                file_requested = self.www_dir + file_requested
+                file_requested = self.ROOT_DIR + file_requested
                 #print ("[",file_requested,"]")
 
             # Cargamos contenido del archivo
@@ -96,7 +96,7 @@ class Server:
                     response_headers = self.header_http( 404)
                     
                     #Pagina por defecto para el error404
-                    file_error404 = self.www_dir + "/ERROR404.html"
+                    file_error404 = self.ROOT_DIR + "/ERROR404.html"
                     try:
                         file_handler = open(file_error404,'rb')
                         if (request_method == 'GET'):  #Solo para GET

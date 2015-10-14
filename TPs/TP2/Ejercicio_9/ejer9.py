@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from lib.ServerHttp import ServerHttp
+from lib.ServerChat import ServerChat
 
-s = ServerHttp()
+s = ServerChat()
 s.iniciar_server()
