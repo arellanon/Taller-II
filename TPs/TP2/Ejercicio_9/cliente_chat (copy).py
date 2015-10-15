@@ -28,7 +28,7 @@ if __name__ == "__main__":
     print 'Connected to remote host. Start sending messages'
     prompt()
      
-    while True:
+    while 1:
         socket_list = [sys.stdin, s]
          
         # Get the list sockets which are readable

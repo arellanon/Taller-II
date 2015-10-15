@@ -34,16 +34,18 @@ class ServerChat:
     def cerrar_server(self):
     ### Cerrar conexion
         try:
-            self.server_socket.cerrar_server(socket.SHUT_RDWR)
+            #self.server_socket.cerrar_server(socket.SHUT_RDWR)
+            self.server_socket.shutdown(socket.SHUT_RDWR)
+            self.server_socket.close()
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
 
-    def broadcast_data(self, sock, message):
+    def enviar_msg(self, client_socket, msg):
         #No envíar mensarje al server_socket y al sock que envia el mensaje
         for socket in self.CONNECTION_LIST:
-            if socket != self.server_socket and socket != sock :
+            if socket != self.server_socket and socket != client_socket :
                 try :
-                    socket.send(message)
+                    socket.send(msg)
                 except :
                     socket.close()
                     self.CONNECTION_LIST.remove(socket)
@@ -57,27 +59,27 @@ class ServerChat:
         # Obtener la lista sockets que están listos para ser leídos a través de selección
             read_sockets,write_sockets,error_sockets = select.select(self.CONNECTION_LIST,[],[])
      
-            for sock in read_sockets:
+            for socket in read_sockets:
                 # Nueva conexion
-                if sock == self.server_socket:
+                if socket == self.server_socket:
                     # Hay una nueva conexión recibido a través server_socket
                     client_socket, addr = self.server_socket.accept()
                     self.CONNECTION_LIST.append(client_socket)
-                    print "Client (%s, %s) connected" % addr
+                    print "Cliente (%s, %s) conectado" % addr
                      
-                    self.broadcast_data(client_socket, "[%s:%s] entered room\n" % addr)
+                    self.enviar_msg(client_socket, "Ingreso: [%s:%s].\n" % addr)
                  
                 # Mensaje desde algun cliente chat
                 else:
                     # Datos del cliente
                     try:
-                        data = sock.recv(self.recv_buffer)
+                        data = socket.recv(self.recv_buffer)
                         if data:
-                            self.broadcast_data(sock, "\r" + '<' + str(sock.getpeername()) + '> ' + data)
+                            self.enviar_msg(socket, "\r" + '<' + str(socket.getpeername()) + '> ' + data)
                     except:
-                        self.broadcast_data(sock, "Client (%s, %s) is offline" % addr)
-                        print "Client (%s, %s) is offline" % addr
-                        sock.close()
-                        self.CONNECTION_LIST.remove(sock)
+                        self.enviar_msg(socket, "Cliente (%s, %s) desconectado." % addr)
+                        print "Cliente (%s, %s) desconectado." % addr
+                        socket.close()
+                        self.CONNECTION_LIST.remove(socket)
                         continue
         self.server_socket.close()
