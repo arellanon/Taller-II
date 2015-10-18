@@ -3,20 +3,18 @@
 import socket, select, string, sys
 
 class ClientChat:
-### Class server Chat
+### Cliente
 
-    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 4096, listen = 10):
+    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 4096):
     ### Constructor
         self.host = host
         self.port = port
         self.recv_buffer = recv_buffer
-        # Lista de socket
-        self.CONNECTION_LIST = []
-        
-    def iniciar_server(self):
+        self.nick = 'Nahuel'
+
+    def iniciar(self):
     ### Iniciar conexion
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.client_socket.settimeout(2)
             self.client_socket.connect((self.host, self.port))
@@ -27,39 +25,37 @@ class ClientChat:
             import sys
             sys.exit(1)
 
-        print "Presionar Ctrl+C para salir."
+        print "Ingreso al chat."
         self.esperando_conexiones()
 
     def cerrar(self):
     ### Cerrar conexion
         try:
-            #self.server_socket.cerrar_server(socket.SHUT_RDWR)
             self.client_socket.shutdown(socket.SHUT_RDWR)
             self.client_socket.close()
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
+            
+    def prompt(self):
+        sys.stdout.write('<Yo> ')
+        sys.stdout.flush()
 
     def esperando_conexiones(self):
         while True:
-            socket_list = [sys.stdin, s]
-             
-            # Get the list sockets which are readable
+            socket_list = [sys.stdin, self.client_socket]
             read_sockets, write_sockets, error_sockets = select.select(socket_list , [], [])
-             
-            for sock in read_sockets:
+            for socket in read_sockets:
                 #incoming message from remote server
-                if sock == s:
-                    data = sock.recv(self.recv_buffer)
+                if socket == self.client_socket:
+                    data = socket.recv(self.recv_buffer)
                     if not data :
-                        print '\nDisconnected from chat server'
+                        print '\nDesconectado del chat.'
                         sys.exit()
                     else :
-                        #print data
                         sys.stdout.write(data)
-                        prompt()
-                 
+                        self.prompt()
                 #user entered a message
                 else :
                     msg = sys.stdin.readline()
-                    s.send(msg)
-                    prompt()
+                    self.client_socket.send(msg)
+                    self.prompt()

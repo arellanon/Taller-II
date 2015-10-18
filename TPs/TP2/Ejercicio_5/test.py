@@ -1,12 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lib import server_ntp
-import socket
+import socket, os, sys
+from lib.ServerSsh import ServerSsh
+import subprocess
 
 if __name__ == '__main__':
-    s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    s.bind(('',8000))
-    while True:
-        data,addr=s.recvfrom(1024)
-        print('Address:',addr,'Data:',data)
-        s.sendto(str( server_ntp.consultar() ),addr)
+
+#    if(len(sys.argv) < 2) :
+#        print 'Usar: python test.py comando'
+#        sys.exit()
+#    comando = sys.argv[1]
+#    os.system("cd /home/")
+#    os.system(comando)
+    
+    
+#    output = subprocess.check_output("ls", shell=True)
+#    print output
+    
+#    s = ServerSsh()
+#    s.iniciar_server()
+
+    import subprocess
+
+    os.environ['a'] = '/home'
+    os.environ['b'] = '/'
+
+    subprocess.call('cd $a', shell=True)
+    subprocess.call('ls', shell=True)
+
+    subprocess.call('cd $b', shell=True)
+    subprocess.call('ls', shell=True)

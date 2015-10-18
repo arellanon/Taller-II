@@ -7,7 +7,7 @@ buff_size = 4096
 host, port = "127.0.0.1", 8000
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s = setsockopt(socket.SOL_SOCKET, socket.SO_ROUSEADDR, 1)
+s = socket.setsockopt(socket.SOL_SOCKET, socket.SO_ROUSEADDR, 1)
 s.bind()
 s.liste(backlog)
 

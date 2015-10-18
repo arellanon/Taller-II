@@ -5,12 +5,12 @@ import socket, select
 class ServerChat:
 ### Class server Chat
 
-    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 1024, listen = 10):
+    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 1024 ):
     ### Constructor
         self.host = host
         self.port = port
         self.recv_buffer = recv_buffer
-        self.listen = listen
+        self.listen = 10
         # Lista de socket
         self.CONNECTION_LIST = []
         
@@ -34,15 +34,14 @@ class ServerChat:
     def cerrar_server(self):
     ### Cerrar conexion
         try:
-            #self.server_socket.cerrar_server(socket.SHUT_RDWR)
             self.server_socket.shutdown(socket.SHUT_RDWR)
             self.server_socket.close()
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
 
-    def enviar_msg(self, client_socket, msg):
-        #No envíar mensarje al server_socket y al sock que envia el mensaje
+    def enviar_msg(self, client_socket, msg):      
         for socket in self.CONNECTION_LIST:
+        #No envíar mensarje al server_socket y al sock que envia el mensaje
             if socket != self.server_socket and socket != client_socket :
                 try :
                     socket.send(msg)
@@ -58,17 +57,15 @@ class ServerChat:
         while True:
         # Obtener la lista sockets que están listos para ser leídos a través de selección
             read_sockets,write_sockets,error_sockets = select.select(self.CONNECTION_LIST,[],[])
-     
+
             for socket in read_sockets:
                 # Nueva conexion
                 if socket == self.server_socket:
-                    # Hay una nueva conexión recibido a través server_socket
+                    # Hay una nueva conexión recibida
                     client_socket, addr = self.server_socket.accept()
                     self.CONNECTION_LIST.append(client_socket)
                     print "Cliente (%s, %s) conectado" % addr
-                     
                     self.enviar_msg(client_socket, "Ingreso: [%s:%s].\n" % addr)
-                 
                 # Mensaje desde algun cliente chat
                 else:
                     # Datos del cliente
