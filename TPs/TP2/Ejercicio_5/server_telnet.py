@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from lib.ServerNtp import ServerNtp
-import socket
-import datetime
+from lib.ServerSsh import ServerSsh
 
 if __name__ == '__main__':
-    s = ServerNtp()
+    s = ServerSsh()
     s.iniciar_server()
