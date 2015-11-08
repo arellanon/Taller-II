@@ -1,5 +1,5 @@
-#UDPclient.py
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import socket
 import sys
 if __name__ == '__main__':    

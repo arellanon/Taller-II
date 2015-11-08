@@ -29,8 +29,8 @@ class ServerNtp:
         while True:
             data, addr = self.server_socket.recvfrom(self.recv_buffer)
             print "Conexion desde: ", addr
-            today = datetime.datetime.now().strftime(data)
-#            today = self.sincronizar()
+#            today = datetime.datetime.now().strftime(data)
+            today = self.sincronizar()
             self.server_socket.sendto(str(today) ,addr)
     
     def sincronizar(self):
