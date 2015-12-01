@@ -8,7 +8,7 @@ import struct, time
 
 class ServerNtp:
     
-    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 1024):
+    def __init__(self, host = '0.0.0.0', port = 8000, recv_buffer = 1024):
         self.host = host
         self.port = port
         self.recv_buffer = recv_buffer

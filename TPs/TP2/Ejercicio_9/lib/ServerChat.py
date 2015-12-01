@@ -5,7 +5,7 @@ import socket, select
 class ServerChat:
 ### Class server Chat
 
-    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 1024 ):
+    def __init__(self, host = '0.0.0.0', port = 8000, recv_buffer = 1024):
     ### Constructor
         self.host = host
         self.port = port

@@ -32,7 +32,8 @@ class ServerHttp:
     def cerrar_server(self):
     ### Cerrar conexion
         try:
-            s.socket.cerrar_server(socket.SHUT_RDWR)
+            self.socket_server.shutdown(socket.SHUT_RDWR)
+            self.socket_server.close()
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
 
@@ -49,6 +50,7 @@ class ServerHttp:
         header += 'Date: ' + current_date +'\n'
         header += 'Server: HTTP-Server-Nahuel\n'
         header += 'Connection: close\n\n'
+        header += '\r\n\r\n'
 
         return header
 

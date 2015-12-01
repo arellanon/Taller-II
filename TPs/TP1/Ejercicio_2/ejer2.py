@@ -8,7 +8,8 @@ def descargar(sugerencia):
     index = 'https://es.wikipedia.org/w/index.php?'    
     parameter = {'search':sugerencia}
     url = index+urllib.urlencode(parameter)
-    file_descarga = open(sugerencia+".html","w")
+    print "Descargando: ...", sugerencia
+    file_descarga = open("Resultado/"+sugerencia+".html","w")
     page = urllib.urlopen(url)
     file_descarga.write(page.read())
     file_descarga.close()
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     url = index+urllib.urlencode(parameter)
     page = urllib.urlopen(url)
 #   Descargarmos la pagina con los resultados
-    file_descarga = open("resultado.html","w")
+    file_descarga = open("Resultado/resultado.html","w")
     file_descarga.write(page.read())
     file_descarga.close()
 
@@ -31,12 +32,16 @@ if __name__ == '__main__':
         if encontrado:
             resultado = re.search('/wiki/(.+)" title', str(line))
             if resultado:
+                print "enviando a descargar: ",urllib.unquote(resultado.group(1))
                 descargar(urllib.unquote(resultado.group(1))) 
                 resultado = ''
         else:
-            resultado = re.search('href="/wiki/(.+)" title="', str(line))
+            resultado = re.search('href="/wiki/(.+)"(.+)title="', str(line), )
             if resultado:
+                print str(line)
+#                print resultado.group(3)
                 link_recuperado = str(resultado.group(1))
                 error_link = re.search(':',link_recuperado)
                 if not error_link:
+                    print "enviando a descargar: ", urllib.unquote(resultado.group(1))
                     descargar(urllib.unquote(resultado.group(1)))

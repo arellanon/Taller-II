@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import socket, time
-import urllib
-
-FLAG = True
 
 class ServerHttp:
 ### Class server HTTP
@@ -14,7 +11,8 @@ class ServerHttp:
         self.port = port
         self.recv_buffer = recv_buffer
         self.listen = listen
-             
+        self.ROOT_DIR = 'www' # Directorio raiz
+
     def iniciar_server(self):
     ### Iniciar conexion
         self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,11 +49,11 @@ class ServerHttp:
         header += 'Date: ' + current_date +'\n'
         header += 'Server: HTTP-Server-Nahuel\n'
         header += 'Connection: close\n\n'
+        header += '\r\n\r\n'
 
         return header
 
     def esperando_conexiones(self):
-        global FLAG
         while True:
             print "Esperando conexiones..."
             self.socket_server.listen(self.listen) # maxima cantidad de conexiones
@@ -69,27 +67,50 @@ class ServerHttp:
 
             # Determinar peticion (HEAD y GET soportados)
             request_method = string.split(' ')[0]
+            print "Method: ", request_method
+            print "Request body: ", string
             if (request_method == 'GET') | (request_method == 'HEAD'):
 
             # Recuperamos el archivo solicitado
                 file_requested = string.split(' ')[1]
-                
-                if FLAG:
-                    page = urllib.urlopen("http://localhost:8001/"+ file_requested)
-                    #page = urllib.urlopen("http://localhost:8001/"+self.path)
-                    response_content = page.read()
-                    print "http://localhost:8001/"+ file_requested
-                    FLAG = False
-                else:
-                    page = urllib.urlopen("http://localhost:8002/"+ file_requested)
-                    #page = urllib.urlopen("http://localhost:8002/"+self.path)
-                    response_content = page.read()
-                    print "http://localhost:8002/"+ file_requested
-                    FLAG = True
+            # Descartamos lo que viene despues del ?
+                file_requested = file_requested.split('?')[0]
 
-                response_headers = self.header_http( 200)
+                if (file_requested == '/'):
+                    file_requested = '/index.html' # si es vacio por defecto devolvemos index.html
+                    
+                file_requested = self.ROOT_DIR + file_requested
+                #print ("[",file_requested,"]")
 
-            # Cargamos contenido del archivo 
+            # Cargamos contenido del archivo
+                try:
+                    file_handler = open(file_requested,'rb')
+                    if (request_method == 'GET'):  #Solo para GET
+                        response_content = file_handler.read()
+                    file_handler.close()
+
+                    response_headers = self.header_http( 200)
+
+                except Exception as e: # Generamos ERROR 404
+                    print "Error 404: File not found\n", e
+                    # Header HTTP de archivo no encontrado!
+                    response_headers = self.header_http( 404)
+                    
+                    #Pagina por defecto para el error404
+                    file_error404 = self.ROOT_DIR + "/ERROR404.html"
+                    try:
+                        file_handler = open(file_error404,'rb')
+                        if (request_method == 'GET'):  #Solo para GET
+                            response_content = file_handler.read()
+                        file_handler.close()
+                    
+                    #Si la pagina por defecto no existe
+                    except Exception as e:
+                        print "Error 404: File not found\n", e
+                        #response_headers = self.header_http( 404)                        
+                        if (request_method == 'GET'):
+                            response_content = b"<html><body><h1>Error 404: File not found</h1></body></html>"
+
                 server_response =  response_headers.encode() # Retornamos Header
                 if (request_method == 'GET'):
                     server_response +=  response_content  # Solo para GET

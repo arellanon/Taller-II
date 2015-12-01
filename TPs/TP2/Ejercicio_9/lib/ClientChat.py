@@ -5,7 +5,7 @@ import socket, select, string, sys
 class ClientChat:
 ### Cliente
 
-    def __init__(self, host = '0.0.0.0', port = 5000, recv_buffer = 4096):
+    def __init__(self, host = '0.0.0.0', port = 8000, recv_buffer = 4096):
     ### Constructor
         self.host = host
         self.port = port
