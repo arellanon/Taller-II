@@ -4,7 +4,7 @@
 #include <math.h>
 #include <time.h>
 /* Dimensión de la matriz de M X M */
-#define M 32                 
+#define M 64                 
 
 
 int main (int argc, char *argv[]) 
@@ -21,7 +21,7 @@ chunk = 10;                    /* Cantidad de iteraciones por bloque de iteracio
 clock_t begin, end;
 double time_spent;
 begin = clock();
-omp_set_num_threads(2);  //Se establece la cantidad de hilos
+omp_set_num_threads(0);  //Se establece la cantidad de hilos
 #pragma omp parallel shared(a,b,c,nthreads,chunk) private(tid,i,j,k)
   {
   tid = omp_get_thread_num();

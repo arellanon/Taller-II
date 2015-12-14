@@ -36,6 +36,7 @@ if __name__ == '__main__':
                 descargar(urllib.unquote(resultado.group(1))) 
                 resultado = ''
         else:
+            
             resultado = re.search('href="/wiki/(.+)"(.+)title="', str(line), )
             if resultado:
                 print str(line)

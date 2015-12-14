@@ -3,7 +3,6 @@
 import socket, time
 from sys import argv
 
-
 class Rtt():
 	def __init__(self):
 		self.t = argv[1]

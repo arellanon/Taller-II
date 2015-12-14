@@ -417,3 +417,23 @@ users.txt
 users.txt~
 Usuario nahuel ('127.0.0.1', 48009) salio del sistema el: 30 NOV 15 21:17:22
 
+Usuario: nahuel ('127.0.0.1', 47772) ingreso: 01 DEC 15 04:40:16
+Usuario nahuel ('127.0.0.1', 47772) salio del sistema el: 01 DEC 15 04:49:00
+
+Usuario: nahuel ('127.0.0.1', 47779) ingreso: 01 DEC 15 04:49:24
+nahuel@nahuel:~$ ls
+client_remote.py
+config.ini
+lib
+log.txt
+server_remote.py
+usersHash.txt
+users.txt
+nahuel@nahuel:~$ ps
+  PID TTY          TIME CMD
+ 4895 pts/7    00:00:00 bash
+ 5234 pts/7    00:00:00 python
+ 5245 pts/7    00:00:00 sh
+ 5246 pts/7    00:00:00 ps
+Usuario nahuel ('127.0.0.1', 47779) salio del sistema el: 01 DEC 15 05:01:44
+
