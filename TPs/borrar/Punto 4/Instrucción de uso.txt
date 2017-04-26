@@ -1,9 +1,0 @@
-Modo de Uso por consola:
-
-Ejemplo:
-
-1- python rtt_tcp.py 3      (el 3 corresponde al tiempo en segundos que se desea settear)
-1- python rtt_udp.py 3      (el 3 corresponde al tiempo en segundos que se desea settear)
-
-rtt_tcp.py lee ips contenidas en el archivo: 'lista_ips.txt'
-rtt_udp.py lee ips de servidores dns contenidas en el archivo: 'dns.txt'
