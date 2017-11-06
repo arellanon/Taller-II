@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 from Socket import Socket
 from enum import Enum
+mode = Enum('mode', 'None Client Server')
+state = Enum('state', 'Disconnected Listening Connecting ConnectFail Connected')
 
 class Connection:
-    mode = Enum('mode', 'None Client Server')
-    state = Enum('state', 'Disconnected Listening Connecting ConnectFail Connected')
-
-    def __init__(self, protocoloId, timeout):
+    def __init__(self, protocoloId, timeout):	
         self.protocoloId = protocoloId
         self.timeout = timeout
         self.mode = mode.None
@@ -30,6 +29,7 @@ class Connection:
         self.ClearData()
         self.mode = mode.Server
         self.state = state.Listening
+	print self.mode
         
     def Connect(self, address):
         self.ClearData()
@@ -37,8 +37,11 @@ class Connection:
         self.state = state.Connecting
         self.address = address
         
+"""
 x = Socket(8000)
 print x.Open()
 x.Send("hola mundo", '127.0.0.1', 8000)
 x.Receive()
 x.Close()
+"""
+
