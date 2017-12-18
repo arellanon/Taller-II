@@ -1,0 +1,9 @@
+Usuario: usuario ('127.0.0.1', 42822) ingreso: 16 DEC 17 13:04:52
+Usuario usuario ('127.0.0.1', 42822) salio del sistema el: 16 DEC 17 13:04:52
+
+Usuario: usuario ('127.0.0.1', 42848) ingreso: 16 DEC 17 13:07:20
+Usuario usuario ('127.0.0.1', 42848) salio del sistema el: 16 DEC 17 13:07:20
+
+Usuario: usuario ('127.0.0.1', 45182) ingreso: 16 DEC 17 19:50:53
+Usuario usuario ('127.0.0.1', 45182) salio del sistema el: 16 DEC 17 19:50:53
+

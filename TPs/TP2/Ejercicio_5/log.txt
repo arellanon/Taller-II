@@ -437,3 +437,120 @@ nahuel@nahuel:~$ ps
  5246 pts/7    00:00:00 ps
 Usuario nahuel ('127.0.0.1', 47779) salio del sistema el: 01 DEC 15 05:01:44
 
+Usuario: nahuel ('127.0.0.1', 47480) ingreso: 16 NOV 17 18:28:02
+nahuel@nahuel:~$ ls
+client_remote.py
+config.ini
+lib
+log.txt
+server_remote.py
+test.txt
+usersHash.txt
+users.txt
+nahuel@nahuel:~$ ls -l
+total 36
+-rw-r--r-- 1 nahuel nahuel  501 Nov  1 23:53 client_remote.py
+-rw-r--r-- 1 nahuel nahuel  149 Nov  1 23:53 config.ini
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:13 lib
+-rw-r--r-- 1 nahuel nahuel 9969 Nov  1 23:53 log.txt
+-rw-r--r-- 1 nahuel nahuel 1681 Nov  1 23:53 server_remote.py
+-rw-r--r-- 1 nahuel nahuel    0 Nov 16 18:14 test.txt
+-rw-r--r-- 1 nahuel nahuel   70 Nov  1 23:53 usersHash.txt
+-rw-r--r-- 1 nahuel nahuel   22 Nov  1 23:53 users.txt
+nahuel@nahuel:~$ mkdir test
+nahuel@nahuel:~$ dir
+client_remote.py  lib	   server_remote.py  test.txt	    users.txt
+config.ini	  log.txt  test		     usersHash.txt
+nahuel@nahuel:~$ ls -l
+total 40
+-rw-r--r-- 1 nahuel nahuel  501 Nov  1 23:53 client_remote.py
+-rw-r--r-- 1 nahuel nahuel  149 Nov  1 23:53 config.ini
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:13 lib
+-rw-r--r-- 1 nahuel nahuel 9969 Nov  1 23:53 log.txt
+-rw-r--r-- 1 nahuel nahuel 1681 Nov  1 23:53 server_remote.py
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:28 test
+-rw-r--r-- 1 nahuel nahuel    0 Nov 16 18:14 test.txt
+-rw-r--r-- 1 nahuel nahuel   70 Nov  1 23:53 usersHash.txt
+-rw-r--r-- 1 nahuel nahuel   22 Nov  1 23:53 users.txt
+nahuel@nahuel:~$ touch test2
+nahuel@nahuel:~$ ls -l
+total 40
+-rw-r--r-- 1 nahuel nahuel  501 Nov  1 23:53 client_remote.py
+-rw-r--r-- 1 nahuel nahuel  149 Nov  1 23:53 config.ini
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:13 lib
+-rw-r--r-- 1 nahuel nahuel 9969 Nov  1 23:53 log.txt
+-rw-r--r-- 1 nahuel nahuel 1681 Nov  1 23:53 server_remote.py
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:28 test
+-rw-r--r-- 1 nahuel nahuel    0 Nov 16 18:28 test2
+-rw-r--r-- 1 nahuel nahuel    0 Nov 16 18:14 test.txt
+-rw-r--r-- 1 nahuel nahuel   70 Nov  1 23:53 usersHash.txt
+-rw-r--r-- 1 nahuel nahuel   22 Nov  1 23:53 users.txt
+nahuel@nahuel:~$ rm test2
+nahuel@nahuel:~$ ls -l
+total 40
+-rw-r--r-- 1 nahuel nahuel  501 Nov  1 23:53 client_remote.py
+-rw-r--r-- 1 nahuel nahuel  149 Nov  1 23:53 config.ini
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:13 lib
+-rw-r--r-- 1 nahuel nahuel 9969 Nov  1 23:53 log.txt
+-rw-r--r-- 1 nahuel nahuel 1681 Nov  1 23:53 server_remote.py
+drwxr-xr-x 2 nahuel nahuel 4096 Nov 16 18:28 test
+-rw-r--r-- 1 nahuel nahuel    0 Nov 16 18:14 test.txt
+-rw-r--r-- 1 nahuel nahuel   70 Nov  1 23:53 usersHash.txt
+-rw-r--r-- 1 nahuel nahuel   22 Nov  1 23:53 users.txt
+nahuel@nahuel:~$ rm test
+nahuel@nahuel:~$ cd test
+nahuel@nahuel:~$ dir
+client_remote.py  lib	   server_remote.py  test.txt	    users.txt
+config.ini	  log.txt  test		     usersHash.txt
+nahuel@nahuel:~$ ls test/
+nahuel@nahuel:~$ touch test/a.txt
+nahuel@nahuel:~$ rm test/a.txt
+nahuel@nahuel:~$ ls test/a.txt
+nahuel@nahuel:~$ ls test/
+nahuel@nahuel:~$ touch test/a.txt
+nahuel@nahuel:~$ echo "hola mundo" >> test/a.txt
+nahuel@nahuel:~$ more test/a.txt
+hola mundo
+nahuel@nahuel:~$ ls
+client_remote.py
+config.ini
+lib
+log.txt
+server_remote.py
+test
+test.txt
+usersHash.txt
+users.txt
+nahuel@nahuel:~$ cd bin
+nahuel@nahuel:~$ ls
+client_remote.py
+config.ini
+lib
+log.txt
+server_remote.py
+test
+test.txt
+usersHash.txt
+users.txt
+Usuario nahuel ('127.0.0.1', 47480) salio del sistema el: 16 NOV 17 18:41:55
+
+Usuario: nahuel ('127.0.0.1', 48434) ingreso: 16 NOV 17 20:09:47
+nahuel@nahuel:~$ ls
+client_remote.py
+config.ini
+lib
+log.txt
+server_remote.py
+test.txt
+usersHash.txt
+users.txt
+nahuel@nahuel:~$ ps -a
+  PID TTY          TIME CMD
+13612 pts/8    00:00:00 tmux
+17798 pts/1    00:00:00 tmux
+17869 pts/3    00:00:00 python
+17883 pts/2    00:00:00 python
+17891 pts/3    00:00:00 sh
+17892 pts/3    00:00:00 ps
+Usuario nahuel ('127.0.0.1', 48434) salio del sistema el: 16 NOV 17 20:10:00
+

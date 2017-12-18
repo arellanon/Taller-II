@@ -3,19 +3,7 @@
 import struct
 
 #Clase implementada para el envio de mensajes
-#Esta compuesta por id_origen - id_destino,  - len data - data
-
-####DETALLE
-#	 	Campo    			|		Tamaño
-#	-----------------------------------------------
-#	   ID_ORIGEN 			|		4 bytes
-#      ID_DESTINO			|		4 bytes
-#	   T (Turno)			|		1 byte
-#	   R (Recibido)			|		1 byte
-#	   F (Fin)			    |		1 byte
-#	   MENSAJE		        |		245 bytes
-#   -----------------------------------------------
-#                       TOTAL     256 bytes
+#Esta compuesta por id_origen - id_destino - flag_turno - flag_recibido - flag_fin - len data - data
 
 class Msg():
 
