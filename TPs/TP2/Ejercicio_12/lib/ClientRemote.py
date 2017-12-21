@@ -19,9 +19,9 @@ class ClientRemote:
              while True:
                 comando = raw_input (user +"@"+user+":~ $ ")
                 if len(comando):
-                  Msg(self.client_socket).send(1, comando)
+                  Msg(self.client_socket).send(0, 1, '', comando)
 #                  out = self.client_socket.recv(self.recv_buffer)
-                  accion, out = Msg(self.client_socket).recv()
+                  id_nodo, accion, path, out = Msg(self.client_socket).recv()
                   print out
         except:
            print "\nchau!.\n "

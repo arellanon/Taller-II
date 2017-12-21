@@ -18,13 +18,13 @@ DIRECTORIO='SLAVE'
 
 class NodoSlave:
 ### Class server Remote
-    def __init__(self, host = '0.0.0.0', port = 8001, host_master='0.0.0.0', port_master=8000, nro_nodo = 0, log = "log.txt", recv_buffer = 1024, listen = 5):
+    def __init__(self, host = '0.0.0.0', port = 8001, host_master='0.0.0.0', port_master=8000, id_nodo = 0, log = "log.txt", recv_buffer = 1024, listen = 5):
         self.host = host
         self.port = port
         self.host_master = host_master
         self.port_master = port_master
-        self.nro_nodo = nro_nodo
-        self.raiz = DIRECTORIO+str(self.nro_nodo)
+        self.id_nodo = id_nodo
+        self.raiz = DIRECTORIO+str(self.id_nodo)
         self.recv_buffer = recv_buffer
         self.listen = listen
         self.log = log
@@ -33,11 +33,11 @@ class NodoSlave:
     def copiarMaster(self):
         socketMaster= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socketMaster.connect((self.host_master, self.port_master))
-        Msg(socketMaster).send(2,'')
-        accion, datos = Msg(socketMaster).recv()
+        Msg(socketMaster).send(self.id_nodo, 2, '', '')
+        id_nodo, accion, path, datos = Msg(socketMaster).recv()
         while datos != '':
-            path=datos.split(SEP)[0]
-            datosArchivo=datos.split(SEP)[1]
+#            path=datos.split(SEP)[0]
+#            datosArchivo=datos.split(SEP)[1]
             subpath=path.split('/')
             subpath[0]= self.raiz #reemplazamos el directorio por el correspondiente del slave
             direct=subpath[0]
@@ -47,9 +47,9 @@ class NodoSlave:
                 direct+='/'+subpath[1]
                 subpath.remove(subpath[0])
             archivo = open(direct,'w')
-            archivo.write(datosArchivo)
+            archivo.write(datos)
             archivo.close()
-            accion, datos = Msg(socketMaster).recv()
+            id_nodo, accion, path, datos = Msg(socketMaster).recv()
 
     def iniciar_server(self):
     ### Iniciar conexion
@@ -73,7 +73,7 @@ class NodoSlave:
         try:
             while True:
                 conn_client, addr_client = self.socket_server.accept()
-                ThreadSlave(conn_client, self.recv_buffer, self.raiz, self.log).start()
+                ThreadSlave(conn_client, self.id_nodo, self.recv_buffer, self.raiz, self.log).start()
         except KeyboardInterrupt:
             print "\nServidor Apagado"
         self.cerrar_server()
@@ -94,8 +94,9 @@ class NodoSlave:
     #Método crearPathsDirectorio. Devuelve un String con todos los paths del directorio.
 
 class ThreadSlave(Thread):
-    def __init__(self, conn_client, recv_buffer, directorio, log):
+    def __init__(self, conn_client, id_nodo, recv_buffer, directorio, log):
         self.conn_client = conn_client
+        self.id_nodo = id_nodo
         self.user = "usuario"
         self.recv_buffer = recv_buffer
         self.raiz = directorio
@@ -103,7 +104,7 @@ class ThreadSlave(Thread):
         Thread.__init__(self)
 
     def run(self):
-        accion, datos = Msg(self.conn_client).recv()
+        id_nodo, accion, path, datos = Msg(self.conn_client).recv()
         print 'accion: ', accion, 'datos: ', datos
         if accion == 1:        
             comando = datos
@@ -115,17 +116,20 @@ class ThreadSlave(Thread):
                 (salida, err) = p.communicate()
                 if salida =="": 
                     error = "Comando Inexistente "
-                    Msg(self.conn_client).send(1, error)                      
+                    paths= self.getPaths()
+                    Msg(self.conn_client).send(self.id_nodo, 1, paths, error)                      
                 else:
-                    Msg(self.conn_client).send(1, str(salida))                                          
-                #enviamos los paths del slave
-                paths= self.getPaths()
-                Msg(self.conn_client).send(1, paths)                       
-                print paths
-                #paths del slave
+                    paths= self.getPaths()
+                    Msg(self.conn_client).send(self.id_nodo, 1, paths, str(salida))                                          
                 print "usuario: "+usuario+ " - comando: "+comando
                 sesion += usuario +"@"+usuario+":~$ " + comando + "\n"+salida             
-                accion, comando = Msg(self.conn_client).recv()
+                id_nodo, accion, path, comando = Msg(self.conn_client).recv()
+        elif accion == 3:
+            lista = path.split('/')
+            lista[0] = self.raiz
+            path = join(*lista)
+            remove(path)
+            print "Eliminación de archivo "+path
 
     def escribirLog(self, sesion):
         log = open(self.log, 'a')

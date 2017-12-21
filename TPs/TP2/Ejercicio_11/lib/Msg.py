@@ -3,46 +3,31 @@
 import struct
 
 #Clase implementada para el envio de mensajes
-#Esta compuesta por Id - len data - data
+#Esta compuesta por accion - len data - data
+
 class Msg():
 
     def __init__(self, sock):
         self.socket = sock
-	self.recv_buffer = 1024
+        self.buff = 256
 
-    def send(self, id, data, addr):
-        id = struct.pack('<I', id)
-        bytes = struct.pack('<I', len(data))
-	print "bytes enviados: ", len(data)
-        self.socket.sendto(id + bytes + data, addr)
+    def send(self, secuencia, ack, ack_bitfield, data, host, port):
+        secuencia = struct.pack('<I', secuencia)
+        ack  = struct.pack('<I', ack)
+        ack_bitfield  = struct.pack('<I', ack_bitfield)
+        pdu = secuencia + ack + ack_bitfield + data
+        #padding = 256 - len(pdu)
+        #print 'len: ',len(pdu), ' - padding: ', padding
+        self.socket.sendto(pdu, (host, port) )
 
     def recv(self):
-        data, addr = self.socket.recvfrom(self.recv_buffer)
-	header = data[0:8]
-	datos = data[8:]
-#	print type(id_recv)
-        id = struct.unpack('<I', header[0:4])[0]
-	print "id recividos: ", id, addr
-        bytes = struct.unpack('<I', header[4:8])[0]
-	print "bytes recividos: ", bytes, addr
-        return id, datos, addr
-
-"""
-        id_recv, addr = self.socket.recvfrom(struct.calcsize('<I'))
-        id = struct.unpack('<I', id_recv)[0]
-	print "id recivido: ", id, addr
-        bytes_recv, addr = self.socket.recvfrom(struct.calcsize('<I'))
-	bytes = struct.unpack('<I', bytes_recv)[0]
-	print "bytes recividos: ", bytes, addr
-        data, addr = self.socket.recvfrom(bytes)
-        return id, data, addr
-
-    def recvall(self, bytes):
-        buff = bytes
-        data_total = ''
-        while buff > 0:
-            data = self.socket.recv(buff)
-            buff -= len(data)
-            data_total += data
-        return data_total
-"""
+    #recuperamos
+        datos, address = self.socket.recvfrom(self.buff)
+        secuencia = datos[:4]
+        secuencia = struct.unpack('<I', secuencia)[0]
+        ack = datos[4:8]
+        ack = struct.unpack('<I', ack)[0]        
+        ack_bitfield = datos[8:12]
+        ack_bitfield = struct.unpack('<I', ack_bitfield)[0]
+        data = datos[12:]
+        return secuencia, ack, ack_bitfield, data, address

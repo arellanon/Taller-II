@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
     try:
         socketMaster.connect((host_master,int(port_master)))
-        Msg(socketMaster).send(0,datos)
-        accion, data = Msg(socketMaster).recv()
+        Msg(socketMaster).send(0, 0, '', datos)
+        id_nodo, accion, path, data = Msg(socketMaster).recv()
         nro_nodo = int(data)
     except:
         print  "No se pudo conectar con el Nodo Master"
