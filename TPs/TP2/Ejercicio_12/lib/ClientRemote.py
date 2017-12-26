@@ -24,6 +24,7 @@ class ClientRemote:
                   id_nodo, accion, path, out = Msg(self.client_socket).recv()
                   print out
         except:
+           Msg(self.client_socket).send(0, 1, '', '')
            print "\nchau!.\n "
 
     def iniciar(self):
