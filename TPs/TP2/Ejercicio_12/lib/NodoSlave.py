@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import socket
-from Msgg import Msg
-#from AcceptClient import AcceptClient
+from Msg import Msg
 from os import system,remove, walk, mkdir
-#from os.path import exists, isdir, join
 from os.path import exists, isdir, join, dirname, getmtime
 from threading import Thread
 import subprocess
@@ -14,43 +12,51 @@ from sys import argv
 import sys
 import time
 
-
-SEP=':'
 DIRECTORIO='SLAVE'
 
 ACCION_REGISTRAR = 0
 ACCION_REMOTO = 1
 ACCION_COPIAR = 2
-ACCION_ELIMINAR_ARCHIVO = 3
-ENVIAR_ARCHIVO = 4
+AGREGAR_ARCHIVO=3
+ELIMINAR_ARCHIVO=4
 MODIFICAR_ARCHIVO=5
-AGREGAR_ARCHIVO=6
-ELIMINAR_ARCHIVO=7
 
 class NodoSlave:
 ### Class server Remote
-    def __init__(self, host = '0.0.0.0', port = 8001, host_master='0.0.0.0', port_master=8000, id_nodo = 0, log = "log.txt", recv_buffer = 1024, listen = 5):
+    def __init__(self, host = '0.0.0.0', port = 8001, log = "log.txt", recv_buffer = 1024, listen = 5):
         self.host = host
         self.port = port
-        self.host_master = host_master
-        self.port_master = port_master
-        self.id_nodo = id_nodo
-        self.raiz = DIRECTORIO+str(self.id_nodo)
         self.recv_buffer = recv_buffer
         self.listen = listen
         self.log = log
-        self.copiarMaster()
+        self.inicializarNodo()
 
-    def copiarMaster(self):
+    def inicializarNodo(self):
+        self.host_master = raw_input("Ingrese la IP del Master: ")
+        self.port_master = raw_input("Ingrese el puerto del Master: ")       
+        self.port_master = int(self.port_master)
+        #Me conecto con el socket master
         socketMaster= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socketMaster.connect((self.host_master, self.port_master))
-        self.socketMasterMsg = Msg(socketMaster)
+        socketMasterMsg = Msg(socketMaster)
+
+        #Registrar NODO_SLAVE
+        datos=str(self.host)+":"+str(self.port)
+        pdu = [0, ACCION_REGISTRAR, '', datos]
+        socketMasterMsg.send(pdu)
+        id_nodo, accion, path, data = socketMasterMsg.recv()
+        self.id_nodo = int(data)
+        self.raiz = DIRECTORIO+str(self.id_nodo)
+
+        #REPLICAR DIRECTORIO MASTER
+        socketMaster= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socketMaster.connect((self.host_master, self.port_master))
+        socketMasterMsg = Msg(socketMaster)
+
         pdu = [self.id_nodo, ACCION_COPIAR, '', '']
-        self.socketMasterMsg.send(pdu)
-        id_nodo, accion, path, datos = self.socketMasterMsg.recv()
-        print "copiar master"
-        print path.split('/')
-        print datos
+        socketMasterMsg.send(pdu)
+        id_nodo, accion, path, datos = socketMasterMsg.recv()
+        print "Copiar directorio master"
         while path != '':
             subpath=path.split('/')
             subpath[0]= self.raiz #reemplazamos el directorio por el correspondiente del slave
@@ -63,7 +69,7 @@ class NodoSlave:
             archivo = open(direct,'w')
             archivo.write(datos)
             archivo.close()
-            id_nodo, accion, path, datos = self.socketMasterMsg.recv()
+            id_nodo, accion, path, datos = socketMasterMsg.recv()
 
     def iniciar_server(self):
     ### Iniciar conexion
@@ -93,14 +99,11 @@ class NodoSlave:
 
     def cerrar_server(self):
     ### Cerrar conexion
-        print "ingreso a cerrar socket"
         try:
             self.socket_server.shutdown(socket.SHUT_RDWR)
-            print "SHUT_RDWR"
             self.socket_server.close()
             import sys
             sys.exit(1)
-            print "close()"
         except Exception as e:
             print "ERROR: No se puede cerrar el socket.", e
             
@@ -108,7 +111,6 @@ class NodoSlave:
 class ThreadSlave(Thread):
     def __init__(self, sock_client_msg, host_master, port_master, id_nodo, recv_buffer, directorio, log):
         self.sockClientMsg = sock_client_msg
-#        self.socketMasterMsg = sock_master_msg
         self.host_master = host_master
         self.port_master = port_master
         self.id_nodo = id_nodo
@@ -121,13 +123,11 @@ class ThreadSlave(Thread):
     def run(self):
         id_nodo, accion, path, datos = self.sockClientMsg.recv()
         path = self.cambiarDirectorioRaiz(path, self.raiz)
-        print 'accion: ', accion, 'datos: ', datos
         if accion == ACCION_REMOTO:        
             comando = datos
             while len(comando):
                 usuario = 'usuario'                
                 print "Inicio de sesion: "+usuario
-#                sesion = 'Usuario: ' +usuario +" "+ str(self.conn_client.getpeername())+' ingreso: '+ datetime.now().strftime('%d %b %y %H:%M:%S').upper()+"\n" 
                 p = subprocess.Popen(comando, cwd=self.raiz, stdout=subprocess.PIPE, shell=True) 
                 directorioAntes = self.getDirectorios() #guardamos el estado del directorio antes de ejecutar el comando
                 (salida, err) = p.communicate()
@@ -138,10 +138,11 @@ class ThreadSlave(Thread):
                 agregar = {k:v for (k,v) in directorioDespues.items() if k not in directorioAntes}
                 eliminar = {k:v for (k,v) in directorioAntes.items() if k not in directorioDespues}
                 
-                print "modificacion: ", modificar
-                print "agregar: ", agregar
-                print "eliminar: ", eliminar  
+#                print "modificacion: ", modificar
+#                print "agregar: ", agregar
+#                print "eliminar: ", eliminar
                 
+                #Revisamos los diccionario y enviamos las actualizaciones al nodo master               
                 for path in agregar.keys():                    
                     archivo=open(path,'r')
                     datosArchivo = archivo.read()
@@ -158,7 +159,6 @@ class ThreadSlave(Thread):
                     socketMaster.connect((self.host_master, self.port_master))
                     socketMasterMsg = Msg(socketMaster)
                     pdu = [self.id_nodo, ELIMINAR_ARCHIVO, path, '']
-                    print pdu
                     socketMasterMsg.send(pdu)                
                 
                 for path in modificar.keys():                    
@@ -171,37 +171,27 @@ class ThreadSlave(Thread):
                     socketMasterMsg = Msg(socketMaster)
                     pdu = [self.id_nodo, MODIFICAR_ARCHIVO, path, datosArchivo]
                     socketMasterMsg.send(pdu)
-                paths= self.getPaths()
-
+                
+                paths = ''
                 pdu = [self.id_nodo, ACCION_REMOTO, paths, str(salida)]
                 self.sockClientMsg.send(pdu)
                 print "usuario: "+usuario+ " - comando: "+comando
-#                sesion += usuario +"@"+usuario+":~$ " + comando + "\n"+salida             
                 id_nodo, accion, path, comando = self.sockClientMsg.recv()
         elif accion == AGREGAR_ARCHIVO:
             archivo = open(path,'w')
             archivo.write(datos)
-            archivo.close()           
+            archivo.close()
+            print "Se agrego el archivo: "+path
         elif accion == ELIMINAR_ARCHIVO:
             remove(path)
-            print "Eliminación de archivo "+path
+            print "Se elimino el archivo: "+path
         elif accion == MODIFICAR_ARCHIVO:
             remove(path)
             archivo = open(path,'w')
             archivo.write(datos)
-            archivo.close()            
+            archivo.close()
+            print "Se modifico el archivo: "+path                     
             
-    def getPaths(self):
-        paths=''
-        if not exists(self.raiz):
-            mkdir(self.raiz)
-        for ruta, subdirectorio, ficheros in walk(self.raiz):
-           subdirectorio.sort()
-           for nombreFichero in ficheros:
-              rutaCompleta = join(ruta, nombreFichero)
-              paths+=rutaCompleta+':'
-        return paths[:-1]
-        
     def getDirectorios(self):
         paths={}
         if not exists(self.raiz):

@@ -1,1 +1,1 @@
-echo "hola mundo" > a.txt
+hola mundo

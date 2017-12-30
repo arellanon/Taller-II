@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import socket, random
-#from AcceptClient import AcceptClient
 from threading import Thread
-from Msgg import Msg
+from Msg import Msg
 from os import system,remove, walk, mkdir
 from os.path import exists, isdir, join, dirname
 import time
@@ -13,11 +12,9 @@ DIRECTORIO='SERVIDOR'
 ACCION_REGISTRAR = 0
 ACCION_REMOTO = 1
 ACCION_COPIAR = 2
-ACCION_ELIMINAR_ARCHIVO = 3
-ENVIAR_ARCHIVO = 4
+AGREGAR_ARCHIVO=3
+ELIMINAR_ARCHIVO=4
 MODIFICAR_ARCHIVO=5
-AGREGAR_ARCHIVO=6
-ELIMINAR_ARCHIVO=7
 
 LISTA_NODOS = {}
 
@@ -51,7 +48,6 @@ class NodoMaster:
             while True:
                 conn_client, addr_client = self.socket_server.accept()
                 sockClientMsg = Msg(conn_client)
-                print "Comienza un Thread ",addr_client
                 ThreadMaster(sockClientMsg).start()
         except KeyboardInterrupt:
             print "\nServidor Apagado"
@@ -80,7 +76,6 @@ class ThreadMaster(Thread):
         accion = pdu_original[1]
         path = pdu_original[2]
         datos = pdu_original[3]
-        print pdu_original
         path = self.cambiarDirectorioRaiz(path, self.raiz)
         if  accion == ACCION_REGISTRAR:
             #Asignamos n° de nodo
@@ -92,24 +87,23 @@ class ThreadMaster(Thread):
             LISTA_NODOS[id_nodo] = (address[0], int(address[1])) #guardamos la direccion del nodo como tupla
             pdu_out = [self.id_master, ACCION_REGISTRAR, '', str(id_nodo)]
             self.sockClientMsg.send(pdu_out)
-#            print LISTA_NODOS
         elif accion == ACCION_REMOTO:
             keyRandom = LISTA_NODOS.keys()[ random.randrange(0, len( LISTA_NODOS.keys() ) ) ]  #seleccionamos un nodo al azar
             nodo = LISTA_NODOS[keyRandom]
             socket_slave= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             socket_slave.connect((nodo[0],int(nodo[1])))
             nodoSlaveMsg = Msg(socket_slave)
-            while len(datos) and accion == 1:
+            while len(datos):
                 pdu_out = [self.id_master, accion, '', datos]
                 nodoSlaveMsg.send(pdu_out) #reenviamos la instruccion del cliente a un nodo slave
-#                id_nodo_aux, accion_aux, path, datos_aux 
-                pdu_in = nodoSlaveMsg.recv()  #recivimos la respuesta del nodo slave
+                pdu_in = nodoSlaveMsg.recv() #recivimos la respuesta del nodo slave
                 self.sockClientMsg.send(pdu_in) #enviamos la respuesta al cliente
-                #self.sincronizar(id_nodo_aux, path)
                 id_nodo, accion, path, datos = self.sockClientMsg.recv()    #recivimos proxima instruccion
+            #Enviamos el msg de final
+            pdu_out = [self.id_master, accion, '', datos]
+            nodoSlaveMsg.send(pdu_out) #reenviamos la instruccion del cliente a un nodo slave
         elif accion == ACCION_COPIAR:
             pathsMaster = self.getPaths()
-            print pathsMaster
             for path in pathsMaster:
                 archivo=open(path,'r')
                 datosArchivo = archivo.read()
@@ -120,6 +114,7 @@ class ThreadMaster(Thread):
             pdu_out = [self.id_master, accion, '', '']
             self.sockClientMsg.send(pdu_out)
         elif accion == AGREGAR_ARCHIVO:
+            print "Se agrego el archivo: "+path
             archivo = open(path,'w') #agregamos el archivo en el nodo master y lo restransmitimos a los nodos slaves
             archivo.write(datos)
             archivo.close()
@@ -132,7 +127,7 @@ class ThreadMaster(Thread):
                     nodoSlaveMsg.send(pdu_out)
                     socket_slave.close()
         elif accion == ELIMINAR_ARCHIVO:
-            print "Eliminación de archivo "+path
+            print "Se elimino el archivo: "+path            
             remove(path) #eliminamos el archivo en el nodo master y lo restransmitimos a los nodos slaves
             for key_nodo, address in LISTA_NODOS.items():
                 if key_nodo != id_nodo:
@@ -143,6 +138,7 @@ class ThreadMaster(Thread):
                     nodoSlaveMsg.send(pdu_out)
                     socket_slave.close()
         elif accion == MODIFICAR_ARCHIVO:
+            print "Se modifico el archivo: "+path
             remove(path)
             archivo = open(path,'w')
             archivo.write(datos)
@@ -155,7 +151,6 @@ class ThreadMaster(Thread):
                     pdu_out = [self.id_master, accion, path, datos]
                     nodoSlaveMsg.send(pdu_out)
                     socket_slave.close()
-        print "Fin del Thread"
         self.sockClientMsg.close()
             
 #Cambia el directorio raiz del path
@@ -177,71 +172,3 @@ class ThreadMaster(Thread):
               rutaCompleta = join(ruta, nombreFichero)
               paths.append(rutaCompleta)
         return paths
-    
-    """
-
-#Sincroniza el directorio raiz con el path informado por el nodo
-    def sincronizar(self, id_nodo, paths):
-        print "sincronizar"
-        pathsNodoSlave=paths.split(':')
-        for index in range(len(pathsNodoSlave)):
-            pathsNodoSlave[index] = self.cambiarDirectorioRaiz(pathsNodoSlave[index], self.raiz)
-        pathsMaster=self.getPaths()
-        for pathMaster in pathsMaster:
-            if pathMaster in pathsNodoSlave: #Si existe el pathMaster, no se realizaron cambios
-                pathsNodoSlave.remove(pathMaster)
-            else:                                       
-                self.eliminarArchivo(id_nodo, pathMaster) #Si no existe existe el pathMaster, hay que eliminarlo
-        for pathNodoSlave in pathsNodoSlave:
-             #Los path restantes de la lista de pathNodoSlave son archivos agregados 
-            print 'agregar ', pathNodoSlave
-            self.agregarArchivo(id_nodo, pathNodoSlave)
-
-#Elimina el archivo en el nodo master y en resto de los nodos slave
-    def eliminarArchivo(self, id_nodo, pathArchivo):
-        remove(pathArchivo) #Elimina el archivo del NodoMaster
-        for key_nodo, address in LISTA_NODOS.items():
-            if key_nodo != id_nodo:
-                socket_slave= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                socket_slave.connect(address)
-                Msg(socket_slave).send(self.id_master, ACCION_ELIMINAR_ARCHIVO, pathArchivo, '' )
-                socket_slave.close()
-                
-#Método agregarArchivo. Se encarga de agregar los archivos a los demas equipos. Toma como argumento el path del archivo y la IP, PUERTO del equipo del archivo agregado. 
-    def agregarArchivo(self, id_nodo, pathArchivo):
-        self.sockClientMsg.send(self.id_master, ENVIAR_ARCHIVO, pathArchivo, '')
-        id_nodo, accion, path, datos = self.sockClientMsg.recv()
-       #Pedir archivo
-        archivoNuevo=open(pathArchivo,'w') 
-        archivoNuevo.write(datos) #Copia el archivo al directorio del Servidor Central
-        archivoNuevo.close()
-        
-       try:
-         socketServidorEquipoCopiarArchivo.connect((host,int(puerto)))
-         socketServidorEquipoCopiarArchivo.sendall(pdu) #Envía solicitud de copia de archivo al equipo.
-         pdu = socketServidorEquipoCopiarArchivo.recv(self.buff_size)
-         tipo, datosArchivo = desencapsularPDU(pdu)
-         datos= pathEquipo+SEP+datosArchivo
-         pdu = encapsularPDU(TIPO_AGREGAR_ARCHIVO,datos)
-         archivoNuevo=open(pathEquipo,'w') 
-         archivoNuevo.write(datosArchivo) #Copia el archivo al directorio del Servidor Central
-         archivoNuevo.close()
-         for equipo in equipos:
-            socketServidorEquipoAgregarArchivo = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-              socketServidorEquipoAgregarArchivo.connect((equipo[0],int(equipo[1])))
-              socketServidorEquipoAgregarArchivo.sendall(pdu) #Envía el path y la copia del archivo a agregar a los demás equipos.
-              print "Agregación de archivo "+pathEquipo+" enviada al equipo "+equipo[0]+ ":"+equipo[1]
-              self.log("Agregación de archivo "+pathEquipo+" enviada al equipo "+equipo[0]+ ":"+equipo[1]+'\n')    
-            except KeyboardInterrupt:
-               print "\nSe ha caido la conexion con el Servidor!"
-            except:
-               print "\nNo se ha podido conectar al Servidor " + host + " puerto " +str(puerto) +". El Servidor se ha caido o no existe. "     
-            socketServidorEquipoAgregarArchivo.close()  
-       except KeyboardInterrupt:
-            print "\nSe ha caido la conexion con el Servidor!"
-       except:
-            print "\nNo se ha podido conectar al Servidor " + host + " puerto " +str(puerto) +". El Servidor se ha caido o no existe. "
-       socketServidorEquipoCopiarArchivo.close()                
-        """
-

@@ -3,14 +3,18 @@
 import struct
 
 #Clase implementada para el envio de mensajes
-#Esta compuesta por accion - len data - data
+#Esta compuesta por id_nodo - accion - len_path - path - len_data - data
 
 class Msg():
 
     def __init__(self, sock):
         self.socket = sock
 
-    def send(self, id_nodo, accion, path, data):
+    def send(self, pdu):
+        id_nodo = pdu[0]
+        accion = pdu[1]
+        path = pdu[2]
+        data = pdu[3]
         id_nodo = struct.pack('<I', id_nodo)
         accion  = struct.pack('<I', accion)
         bytes_path = struct.pack('<I', len(path))
@@ -27,7 +31,8 @@ class Msg():
         path = self.recvall(struct.unpack('<I', bytes_path)[0])
         bytes = self.recvall(struct.calcsize('<I'))
         data = self.recvall(struct.unpack('<I', bytes)[0])
-        return id_nodo, accion, path, data
+        pdu = id_nodo, accion, path, data
+        return pdu
 
     def recvall(self, bytes):
         buff = bytes
@@ -37,3 +42,6 @@ class Msg():
             buff -= len(data)
             data_total += data
         return data_total
+        
+    def close(self):
+        self.socket.close()
