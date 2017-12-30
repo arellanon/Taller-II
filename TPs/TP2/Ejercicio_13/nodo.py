@@ -4,8 +4,8 @@ import argparse, ConfigParser, sys
 from lib.NodoCircular import NodoCircular
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Ejecucion de nodo mapper.')
-    parser.add_argument('id', type=int, help='ID del nodo.')
+    parser = argparse.ArgumentParser(description='Ejecucion nodo circular.')
+    parser.add_argument('--id', type=int, help='ID del nodo.')
     args = parser.parse_args()
 
     print 'Nodo elegido: ', 'nodo'+ str(args.id)
@@ -28,12 +28,3 @@ if __name__ == "__main__":
         nodoCircular.anilloLogico()
     else :
         print 'El nodo'+ str(args.id) +' no existe en el archivo de configuracion config.ini'
-    #cfg_nodo = { 'host' : config_parser.get(name_nodo, 'host'), 'port' : config_parser.getint(name_nodo, 'port') }
-    
-    #print cfg_nodo['host'], ':', cfg_nodo['port']
-    
-    
-
-
-   # mapper = NodoMapper(args.host, args.port, reducer)
-   # mapper.iniciar_server()

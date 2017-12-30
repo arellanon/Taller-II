@@ -12,6 +12,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Client - Realiability, Ordering and Congestion Avoidance over UDP.')
     parser.add_argument('--host', default='0.0.0.0', help='IP del host donde brinda servicio el programa.')
     parser.add_argument('--port', type=int, default='8000', help='Puerto donde brinda servicio el programa.')
-    parser.add_argument('--log',  default='log.txt', help='Archivo donde se almacenara el log. Por defecto log.txt')
     args = parser.parse_args()
     main()
