@@ -6,10 +6,9 @@ from lib.NodoCircular import NodoCircular
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Ejecucion nodo circular.')
     parser.add_argument('--id', type=int, help='ID del nodo.')
+    parser.add_argument('--id_dst', type=int, help='ID del nodo destino.')
     args = parser.parse_args()
-
-    print 'Nodo elegido: ', 'nodo'+ str(args.id)
-    
+   
     config_parser = ConfigParser.SafeConfigParser()
     config_parser.read('config.ini')
 
@@ -20,11 +19,11 @@ if __name__ == "__main__":
         #armamos un diccionario con key id_nodo y valor tupla host,port
         lista_nodos[id_nodo] = ( config_parser.get(nodo, 'host'), config_parser.getint(nodo, 'port') )
     
-    if( lista_nodos.has_key(args.id) ) :
+    if( lista_nodos.has_key(args.id) and lista_nodos.has_key(args.id_dst) ) :
         cfg_nodo = lista_nodos[args.id]
-        print cfg_nodo
-        nodoCircular = NodoCircular( args.id, cfg_nodo[0], cfg_nodo[1] )
-        nodoCircular.conectando_nodos(lista_nodos)
+        cfg_nodo_dst = lista_nodos[args.id_dst]
+        nodoCircular = NodoCircular( args.id, cfg_nodo[0], cfg_nodo[1], cfg_nodo_dst[0], cfg_nodo_dst[1])
+        nodoCircular.conectando_nodos()
         nodoCircular.anilloLogico()
     else :
-        print 'El nodo'+ str(args.id) +' no existe en el archivo de configuracion config.ini'
+        print 'El NODO ID '+ str(args.id) +' o el NODO ID_DST '+str(args.id_dst)+' no existe en el archivo de configuracion config.ini'
