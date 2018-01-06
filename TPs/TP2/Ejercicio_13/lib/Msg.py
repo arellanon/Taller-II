@@ -10,7 +10,13 @@ class Msg():
     def __init__(self, sock):
         self.socket = sock
 
-    def send(self, id_origen, id_destino, turno, recibido, fin, data):
+    def send(self, pdu):
+        id_origen = pdu[0]
+        id_destino = pdu[1]
+        turno = pdu[2]
+        recibido = pdu[3]
+        fin = pdu[4]
+        data = pdu[5]
         id_origen  = struct.pack('<I', id_origen)
         id_destino = struct.pack('<I', id_destino)
         turno = struct.pack('<?', turno)
@@ -38,8 +44,9 @@ class Msg():
 #        id = self.recvall(struct.calcsize('<I'))
 #        id = struct.unpack('<I', id)[0]
         bytes = self.recvall(struct.calcsize('<I'))
-        data = self.recvall(struct.unpack('<I', bytes)[0])        
-        return id_origen, id_destino, turno, recibido, fin, data
+        data = self.recvall(struct.unpack('<I', bytes)[0])
+        pdu = [id_origen, id_destino, turno, recibido, fin, data]
+        return pdu 
 
     def recvall(self, bytes):
         buff = bytes

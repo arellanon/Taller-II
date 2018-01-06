@@ -23,7 +23,10 @@ if __name__ == "__main__":
         cfg_nodo = lista_nodos[args.id]
         cfg_nodo_dst = lista_nodos[args.id_dst]
         nodoCircular = NodoCircular( args.id, cfg_nodo[0], cfg_nodo[1], cfg_nodo_dst[0], cfg_nodo_dst[1])
-        nodoCircular.conectando_nodos()
-        nodoCircular.anilloLogico()
+        try:
+            nodoCircular.conectando_nodos()
+            nodoCircular.anilloLogico()
+        except KeyboardInterrupt:
+            print "\nNodo Finalizado."
     else :
         print 'El NODO ID '+ str(args.id) +' o el NODO ID_DST '+str(args.id_dst)+' no existe en el archivo de configuracion config.ini'
