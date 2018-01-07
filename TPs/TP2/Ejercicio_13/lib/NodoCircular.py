@@ -5,7 +5,6 @@ import socket
 from sys import argv
 import sys
 import argparse
-from datetime import datetime
 from os import system
 from os.path import exists
 from time import time, sleep
@@ -40,7 +39,21 @@ class NodoCircular(object):
         except KeyboardInterrupt:
             print "\nServidor finalizado."
     
-    def conectando_nodos(self):
+    #Método cargarArchivoMensajes. Carga en una lista todos los mensajes a enviar del nodo.
+    def loadFile(self):
+        listaMensajes=[]
+        if exists("nodo"+str(self.id_nodo)+".txt"):
+            archivo = open("nodo"+str(self.id_nodo)+".txt",'r')
+            lista = archivo.readlines()
+            for mensaje in lista:
+                id_dst = int(mensaje.split(':')[0])
+                mensaje = mensaje.split(':')[1]
+                listaMensajes.append([id_dst, mensaje])
+        else: 
+            print "Verifique que exista el archivo nodo"+str(self.id_nodo)+".txt\n"
+        return listaMensajes            
+    
+    def conectarNodos(self):
         print 'NODO ID: ', self.id_nodo
         self.iniciar_server()
         self.listaMensajes = self.loadFile()
@@ -78,11 +91,11 @@ class NodoCircular(object):
                         sleep(2)
 
 #Método anilloLogico. Permite el envio de mensaje del nodo origen (cuando corresponda) al nodo saliente y la entrada de PDUs del nodo entrante 
-    def anilloLogico(self):
+    def ejecutarAnillo(self):
         finalizar = False
-        self.MsgIzq = Msg(self.socket_izq)
-        self.MsgDer = Msg(self.socket_der)
-        inputs = [self.socket_der, sys.stdin]
+        self.MsgDer = Msg(self.socket_der)  #Socket nodo entrada        
+        self.MsgIzq = Msg(self.socket_izq)  #Socket nodo salida
+        inputs = [self.socket_der, sys.stdin]   #Entrada socket_derecho e input por teclado
         nroMsg = 0
         system ("clear")
         print "Cantidad de mensajes: ", len(self.listaMensajes)
@@ -94,66 +107,52 @@ class NodoCircular(object):
         while not finalizar:
             readable, writable, exceptional = select(inputs,[],[])
             for r in readable:
-                #Entrada de input por teclado
-                if self.turno == 1:
-                    if r == sys.stdin:
-                        opcion = sys.stdin.readline()[:-1]
-                        if opcion.upper() != "Q":
-                            if nroMsg >= len(self.listaMensajes):
-                                nroMsg = 0
-                            mensaje = self.listaMensajes[nroMsg]
-                            id_dst = mensaje[0]
-                            datos = mensaje[1]
-                            pdu = [self.id_nodo, id_dst, 0, 0, 0, datos]
-                            print "Mensaje N° ", nroMsg," : ", pdu,
-                            self.MsgIzq.send(pdu)
-                            nroMsg+=1
-                        self.turno=0
-                        TTLinicio = time()
-                        if self.id_nodo == 0 and opcion.upper() == "Q" : #Si es el nodo ID 0 puede permitir finalizar el programa.
-                            finalizar = True
-                            pdu = [self.id_nodo, 0, 0, 0, 1, '']
-                            self.MsgIzq.send(pdu)
-                #Recepcion de mensaje nodo derecho
+                #Revisamos los mensajes recibidos desde el nodo derecho
                 if r == self.socket_der:
                     pdu = self.MsgDer.recv()
-                    id_src, id_dst, turno, recibido, fin, mensaje = pdu
-                    if fin: #Significa que llegó mensaje con el comando de finalizacion
-                        finalizar = True
-                        pdu = [id_src, id_dst, turno, recibido, fin, mensaje]
-                        self.MsgIzq.send(pdu)
-                    elif turno==1: #Significa que el nodo anterior terminó de mandar mensajes por lo que le da el lugar a este nodo.
+                    id_src, id_dst, turno, ack, fin, mensaje = pdu
+                    if turno==1: #Es turno de enviar mensajes del nodo
                         self.turno=1
-                        system ("clear")
+#                        system ("clear")
                         if self.id_nodo == 0:
                             print "Presione cualquier tecla para enviar mensajes. Q para finalizar"
                         else:
-                            print "Presione cualquier tecla para enviar mensajes."
-                    elif id_dst == self.id_nodo: #Significa que el mensaje del nodo origen era destinado a este nodo.
+                            print "Presione cualquier tecla para enviar mensajes."                    
+                    elif id_dst == self.id_nodo: #El mensaje destinado a este nodo.
                         print "Mensaje recibido: ", pdu
                         pdu = [id_src, id_dst, 0, 1, 0, mensaje]
                         self.MsgIzq.send(pdu)
-                    elif id_src == self.id_nodo: #Significa que el mensaje volvio al origen por lo que le da lugar al siguiente a nodo a que transmita.
-                        if recibido==1: #Si el byte recibido estaba activado entonces significa que el mensaje llego a destino
-                            print "- ACK"                            
+                    elif id_src == self.id_nodo: #El mensaje hizo una vuelta completa y regreso a origen, verificamos ack.
+                        if ack==1:
+                            print "- ACK"
                         else:
                             print "- NACK"
+                        #Se envia mensaje para pasarle el turno al nodo siguiente
                         pdu = [self.id_nodo, 0, 1, 0, 0, '']
                         self.MsgIzq.send(pdu)
-                    else: #Significa que el mensaje no era destinado para este nodo
-                        pdu = [id_src, id_dst, turno, recibido, fin, mensaje]
+                    elif fin: #Se recibe mensaje de finalización
+                        finalizar = True
+                        pdu = [id_src, id_dst, turno, ack, fin, mensaje]
+                        self.MsgIzq.send(pdu) 
+                    else: #No se realiza acción, se reenvia el mensaje al siguiente nodo
+                        pdu = [id_src, id_dst, turno, ack, fin, mensaje]
                         self.MsgIzq.send(pdu)
-  
-#Método cargarArchivoMensajes. Carga en una lista todos los mensajes a enviar del nodo.
-    def loadFile(self):
-        listaMensajes=[]
-        if exists("mensajes"+str(self.id_nodo)+".txt"):
-            archivo = open("mensajes"+str(self.id_nodo)+".txt",'r')
-            lista = archivo.readlines()
-            for mensaje in lista:
-                id_dst = int(mensaje.split(':')[0])
-                mensaje = mensaje.split(':')[1]
-                listaMensajes.append( [id_dst, mensaje] )
-        else: 
-            print "No se pudo cargar el archivo de mensajes"+str(self.id_nodo)+".txt Es el turno del siguiente nodo \n"
-        return listaMensajes
+                #Si es el turno del nodo, verificamos entrada por teclado
+                if self.turno == 1 and r == sys.stdin:
+                    opcion = sys.stdin.readline()[:-1]
+                    if opcion.upper() != "Q":
+                        #Enviamos los mensajes cargados. 
+                        if nroMsg >= len(self.listaMensajes):  #si ya enviamos todos los mensajes, empezamos de nuevo.
+                            nroMsg = 0
+                        mensaje = self.listaMensajes[nroMsg]
+                        id_dst = mensaje[0]
+                        datos = mensaje[1]
+                        pdu = [self.id_nodo, id_dst, 0, 0, 0, datos]
+                        print "Mensaje N° ", nroMsg," : ", pdu,
+                        self.MsgIzq.send(pdu) #se envia mensaje
+                        nroMsg+=1 #se pasa incrementa el nro de mensaje
+                    self.turno=0
+                    if self.id_nodo == 0 and opcion.upper() == "Q" : #Si es el nodo ID 0 puede permitir finalizar el programa.
+                        finalizar = True
+                        pdu = [self.id_nodo, 0, 0, 0, 1, '']
+                        self.MsgIzq.send(pdu)

@@ -22,10 +22,10 @@ if __name__ == "__main__":
     if( lista_nodos.has_key(args.id) and lista_nodos.has_key(args.id_dst) ) :
         cfg_nodo = lista_nodos[args.id]
         cfg_nodo_dst = lista_nodos[args.id_dst]
-        nodoCircular = NodoCircular( args.id, cfg_nodo[0], cfg_nodo[1], cfg_nodo_dst[0], cfg_nodo_dst[1])
+        nodoCircular = NodoCircular(args.id, cfg_nodo[0], cfg_nodo[1], cfg_nodo_dst[0], cfg_nodo_dst[1])
         try:
-            nodoCircular.conectando_nodos()
-            nodoCircular.anilloLogico()
+            nodoCircular.conectarNodos()
+            nodoCircular.ejecutarAnillo()
         except KeyboardInterrupt:
             print "\nNodo Finalizado."
     else :

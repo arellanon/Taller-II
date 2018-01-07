@@ -3,7 +3,7 @@
 import struct
 
 #Clase implementada para el envio de mensajes
-#Esta compuesta por id_origen - id_destino - flag_turno - flag_recibido - flag_fin - len data - data
+#Esta compuesta por id_origen - id_destino - flag_turno - flag_ack - flag_fin - len data - data
 
 class Msg():
 
@@ -14,16 +14,16 @@ class Msg():
         id_origen = pdu[0]
         id_destino = pdu[1]
         turno = pdu[2]
-        recibido = pdu[3]
+        ack = pdu[3]
         fin = pdu[4]
         data = pdu[5]
         id_origen  = struct.pack('<I', id_origen)
         id_destino = struct.pack('<I', id_destino)
         turno = struct.pack('<?', turno)
-        recibido = struct.pack('<?', recibido)
+        ack = struct.pack('<?', ack)
         fin = struct.pack('<?', fin)
         bytes = struct.pack('<I', len(data))
-        self.socket.sendall(id_origen + id_destino + turno + recibido + fin + bytes + data)
+        self.socket.sendall(id_origen + id_destino + turno + ack + fin + bytes + data)
 
     def recv(self):
     #recuperamos 
@@ -35,8 +35,8 @@ class Msg():
         turno  = self.recvall(struct.calcsize('<?'))
         turno = struct.unpack('<?', turno)[0]        
 
-        recibido  = self.recvall(struct.calcsize('<?'))
-        recibido = struct.unpack('<?', recibido)[0]
+        ack  = self.recvall(struct.calcsize('<?'))
+        ack = struct.unpack('<?', ack)[0]
         
         fin  = self.recvall(struct.calcsize('<?'))
         fin = struct.unpack('<?', fin)[0]
@@ -45,7 +45,7 @@ class Msg():
 #        id = struct.unpack('<I', id)[0]
         bytes = self.recvall(struct.calcsize('<I'))
         data = self.recvall(struct.unpack('<I', bytes)[0])
-        pdu = [id_origen, id_destino, turno, recibido, fin, data]
+        pdu = [id_origen, id_destino, turno, ack, fin, data]
         return pdu 
 
     def recvall(self, bytes):

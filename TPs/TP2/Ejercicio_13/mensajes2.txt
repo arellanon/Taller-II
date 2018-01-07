@@ -1,5 +1,0 @@
-1:Hola Nodo ID 1
-0:Hola nodo ID 0
-1:Este mensaje sera para el nodo ID 1
-0:Este mensaje sera para el nodo ID 0
-1:Este mensaje le llegara de nuevo al nodo ID 1
