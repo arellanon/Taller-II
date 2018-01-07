@@ -45,6 +45,7 @@ class Msg():
 #        id = struct.unpack('<I', id)[0]
         bytes = self.recvall(struct.calcsize('<I'))
         data = self.recvall(struct.unpack('<I', bytes)[0])
+#        print "data: ", data
         pdu = [id_origen, id_destino, turno, ack, fin, data]
         return pdu 
 
