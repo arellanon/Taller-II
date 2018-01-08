@@ -59,3 +59,70 @@ Date: Sat, 28 Nov 2015 18:36:10
 Server: HTTP-Server-Nahuel
 Connection: close
 
+HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 19:19:58 GMT
+Server: Apache
+Set-Cookie: LiSESSIONID=51A1A3AB74C0AADE1833137EEF9155A8; Path=/; HttpOnly
+Set-Cookie: LithiumUserInfo=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+Set-Cookie: LithiumUserSecure=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+Set-Cookie: LithiumVisitor=~2v8LRdAiYHNyozlnr~0DlpVJVefq6UQ-icMChRWg0y110SYImPC-5BjP9oSG0ktsPhQB0oMiLyppa86dDDvaQIezIRgJn-INMbz0ijAw..; Expires=Wed, 05-Jan-2028 19:19:58 GMT; Path=/; HttpOnly
+Pragma: no-cache
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Cache-Control: no-cache, no-store, must-revalidate, private
+X-Frame-Options: SAMEORIGIN
+Vary: Accept-Encoding
+Connection: close
+Transfer-Encoding: chunked
+Content-Type: text/html;charset=UTF-8HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 19:57:02 GMT
+Server: Apache/2.4.10 (Debian)
+Vary: Accept-Encoding
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=iso-8859-1HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 19:58:02 GMT
+Server: Apache
+Set-Cookie: LiSESSIONID=E77FD2318E47E76869D7A2EC0C8F32C3; Path=/; HttpOnly
+Set-Cookie: LithiumUserInfo=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+Set-Cookie: LithiumUserSecure=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+Set-Cookie: LithiumVisitor=~2PTU0w4yn0oT6G64E~Rqbo1Y8Xq3QySWjUNqzqGX_S4e8_69Ow0YOIsHS_iO6jgiDBvd3cOqzWafxAtz-4d_uUUBlHj1bbdy0APGNUPg..; Expires=Wed, 05-Jan-2028 19:58:02 GMT; Path=/; HttpOnly
+Pragma: no-cache
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Cache-Control: no-cache, no-store, must-revalidate, private
+X-Frame-Options: SAMEORIGIN
+Vary: Accept-Encoding
+Connection: close
+Transfer-Encoding: chunked
+Content-Type: text/html;charset=UTF-8HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 19:58:44 GMT
+Server: Apache/2.4.10 (Debian)
+Vary: Accept-Encoding
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=iso-8859-1HTTP/1.1 400 Bad Request
+Content-Type: text/html; charset=UTF-8
+Referrer-Policy: no-referrer
+Content-Length: 1555
+Date: Sun, 07 Jan 2018 19:59:34 GMTHTTP/1.1 400 Bad Request
+Content-Type: text/html; charset=UTF-8
+Referrer-Policy: no-referrer
+Content-Length: 1555
+Date: Sun, 07 Jan 2018 20:00:36 GMTHTTP/1.1 400 Bad Request
+Content-Type: text/html; charset=UTF-8
+Referrer-Policy: no-referrer
+Content-Length: 1555
+Date: Sun, 07 Jan 2018 20:01:28 GMTHTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 20:10:24 GMT
+Server: Apache/2.4.10 (Debian)
+Vary: Accept-Encoding
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=iso-8859-1HTTP/1.1 404 Not Found
+Content-Type: text/html; charset=UTF-8
+Date: Sun, 07 Jan 2018 20:10:49 GMT
+Server: gws
+Content-Length: 1561
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: SAMEORIGINHTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 20:14:19 GMT
+Server: Apache/2.4.10 (Debian)
+Vary: Accept-Encoding
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=iso-8859-1

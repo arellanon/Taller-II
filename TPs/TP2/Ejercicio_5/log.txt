@@ -554,3 +554,6 @@ nahuel@nahuel:~$ ps -a
 17892 pts/3    00:00:00 ps
 Usuario nahuel ('127.0.0.1', 48434) salio del sistema el: 16 NOV 17 20:10:00
 
+Usuario: nahuel ('127.0.0.1', 35448) ingreso: 07 JAN 18 18:02:28
+Usuario nahuel ('127.0.0.1', 35448) salio del sistema el: 07 JAN 18 18:04:23
+

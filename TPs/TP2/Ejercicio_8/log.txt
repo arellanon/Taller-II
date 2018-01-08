@@ -98,3 +98,13 @@ Date: Sat, 28 Nov 2015 18:38:47
 Server: HTTP-Server-Nahuel
 Connection: close
 
+HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 18:31:05
+Server: HTTP-Server-Nahuel
+Connection: close
+
+HTTP/1.1 200 OK
+Date: Sun, 07 Jan 2018 18:31:05
+Server: HTTP-Server-Nahuel
+Connection: close
+
